@@ -45,3 +45,102 @@ Kafka는 **아주 유연한 Queue** 역할을 하는 것이라고 할 수 있다
 Kafka는 데이터 흐름에 있어 Fault Tolerant 즉, **고가용성**으로 서버에 이슈가 생기거나 갑자기 전원이 내려가도 **데이터 손실 없이 복구가 가능**하다. 또한 낮은 지연(latency), 높은 처리량(throughput)을 통해 **효율적으로 많은 데이터 처리**가 가능하다.   
    
 ---
+
+## Topic이란?
+
+### **1. Topic** 
+
+데이터가 들어가는 공간을 topic이라고 부른다.  
+
+kafka topic은 일반적인 AMQP(Advanced Message Queing Protocol)와는 다르게 동작한다.  
+
+&#62; AMQP(Advanced Message Queing Protocol) : 메시지 지향 미들웨어를 위한 개방형 표준 응용 계층 프로토콜, MQ의 오픈 소스에 기반한 표준 프로토콜을 의미한다. 기존 MQ들의 약점을 보완하기 위해 등장했다.  
+
+kafka에서는 topic을 여러개 생성할 수 있으며, DB의 테이블이나 파일 시스템의 폴더와 유사한 성질을 가진다.  
+
+topic은 이름을 가질 수 있다. 어떤 데이터를 담는지, 목적에 따라 명확하게 명시하면 추후 쉽게 유지보수가 가능하다.
+
+<img width="650" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/0178463e-c98e-41b6-b840-550334dae3e0">
+
+---
+
+### **2. Topic 내부, Partition** 
+
+하나의 topic은 여러개의 partition으로 구성될 수 있다.
+
+partition 번호는 0번부터 시작하며, queue와 같이 끝에서부터 데이터가 차곡차곡 쌓인다.  
+
+<img width="750" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/e558b3f4-2928-4360-a480-995f692cff8c">
+
+한 topic에 consumer가 붙게 되면 가장 오래된 데이터부터 순서대로 가져가며, 더이상 데이터가 없으면 또 다른 데이터가 들어올 때까지 기다린다.  
+
+consumer가 topic 내부 partition에서 데이터를 가져가도 데이터는 삭제되지 않는다. 따라서 새로운 consumer가 붙었을 때 다시 0번 데이터부터 가져갈 수 있다.  
+
+다만 consumer 그룹이 달라야 하며, auto.offset.reset = earliest로 세팅되어 있어야 한다.  
+
+&#62; offset : consumer가 topic의 데이터를 어디까지 읽었는지 저장값  
+
+&#62; auto.offset.reset 옵션  
+
+``` java
+// consumer가 topic 구독 후 partition에 처음 들어오는 데이터부터  
+auto.offset.reset = latest
+
+// 가장 처음 offset부터 즉, 가장 오래된 데이터  
+auto.offset.reset = earliest
+
+// offset 찾지 못하면 exception 발생
+auto.offset.reset = none
+```
+
+<img width="750" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8a36ff31-0c63-47a5-b0c7-8984ca139edc">
+
+데이터가 삭제되지 않기 때문에 동일한 데이터에 대해 2번 처리할 수 있는데 이는 kafka를 사용하는 아주 중요한 이유기도 하다.
+
+클릭 로그를 분석하고 시각화하기 위해 ES(Elasticsearch)에 저장하기도 하고, 클릭 로그를 백업하기 위해 Hadoop에 저장할 수도 있다.
+
+<img width="750" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/6bb3dfa0-3dda-4956-91ee-565971e51157">
+
+---
+
+### **3. Partition이 2개 이상인 경우**  
+
+producer는 데이터를 보낼 때 키를 지정할 수 있다.  
+
+producer가 새로운 데이터를 보내면 아래 규칙에 따라 partition이 지정된다.  
+
+- key가 null이고, 기본 partitioner 사용할 경우  
+$\rightarrow$ RR(Round-robin)로 할당
+
+- key가 있고, 기본 partitioner 사용할 경우  
+$\rightarrow$ key의 hash값을 구하고 특정 partition에 할당한다.
+
+<img width="750" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/ccecd73e-5c9f-4e35-b437-fad6d9ac99f7">
+
+---
+
+### **4. Partition을 늘리는 것**  
+
+partition을 늘리는 것은 가능하나 다시 줄일 수는 없다.  
+
+그렇다면 왜 partition을 늘리는 것일까?  
+
+바로 데이터 처리를 분산시키기 위해서이다. partition을 늘리면 consumer를 늘려서 데이터 처리를 분산시킨다.  
+
+---
+
+### **5. Partition의 Record가 삭제되는 시점** 
+
+삭제되는 타이밍은 옵션에 따라 다르며, 아래 방법으로 record가 저장되는 최대 시간과 길이를 지정할 수 있다.
+
+``` java
+// 최대 record 보존 시간
+log.retention.ms
+
+// 최대 record 보존 크기(byte)
+log.retention.byte
+```
+
+위 방법을 통해 일정한 기간 혹은 용량만큼 데이터를 저장할 수 있게 되며, 적절한 시점에 데이터가 삭제되게 설정할 수 있다.
+
+---
