@@ -44,7 +44,6 @@ Kafka는 **아주 유연한 Queue** 역할을 하는 것이라고 할 수 있다
 
 Kafka는 데이터 흐름에 있어 Fault Tolerant 즉, **고가용성**으로 서버에 이슈가 생기거나 갑자기 전원이 내려가도 **데이터 손실 없이 복구가 가능**하다. 또한 낮은 지연(latency), 높은 처리량(throughput)을 통해 **효율적으로 많은 데이터 처리**가 가능하다.   
    
----
 
 ## Topic이란?
 
@@ -143,4 +142,32 @@ log.retention.byte
 
 위 방법을 통해 일정한 기간 혹은 용량만큼 데이터를 저장할 수 있게 되며, 적절한 시점에 데이터가 삭제되게 설정할 수 있다.
 
----
+
+## Consumer Lag이란?
+
+kafka를 운영함에 있어 아주 중요한 모니터링 지표이다.
+
+producer는 topic의 partition에 데이터를 차곡차곡 넣는다. 이 partition에 데이터가 하나씩 들어가게 되면 각 데이터에는 offset이라는 숫자가 붙게 된다.   
+partition이 1개일 때 데이터를 넣을 경우 차례대로 숫자가 0부터 매겨진다.
+
+만약 producer가 데이터를 넣어주는 속도가 consumer가 가져가는 속도보다 빠르면   
+$\rightarrow$ producer가 넣은 데이터의 offset, consumer가 가져간 데이터의 offset 간 차이가 발생한다.
+
+이것이 바로 consumer lag이다.
+
+<img width="250" height="auto" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/180b61f1-df97-4d75-b513-a4e9871a8974">
+   
+lag의 숫자를 통해 해당 topic에 대해 파이프라인으로 연계되어 있는 producer와 consumer 상태 유추가 가능하다. 주로 consumer의 상태를 볼 때 사용한다.
+
+topic에 여러 partition이 존재하면 lag이 여러개 존재할 수 있다.   
+consumer 그룹이 1개이고, partition이 2개인 topic에서 데이터를 가져가면 lag 2개가 측정될 수 있다.
+
+이렇게 1개의 topic과 consumer 그룹에 대한 lag이 여러개 존재할 수 있을 때, 그 중 높은 숫자의 lag을 records-lag-max라고 한다.
+
+<img width="300" height="auto" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/d3dbb0e1-5c98-424b-82a4-a023e19d70ae">
+   
+consumer의 성능이 안 나오거나 비정상적인 동작을 하면 lag이 필연적으로 발생해 주의 깊게 살펴본다.
+
+### 핵심
+1. lag은 producer의 offset과 consumer의 offset간의 차이이다.
+2. lag은 여러개 존재할 수 있다.
