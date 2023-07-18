@@ -171,3 +171,60 @@ consumer의 성능이 안 나오거나 비정상적인 동작을 하면 lag이 �
 ### 핵심
 1. lag은 producer의 offset과 consumer의 offset간의 차이이다.
 2. lag은 여러개 존재할 수 있다.
+
+
+## Consumer Lag Monitoring Application, Kafka Burrow
+
+kafka lag을 모니터링하기 위해 오픈소스인 burrow를 사용한다.
+
+kafka lag은 topic의 가장 최신 offset과 consumer offset간의 차이이다.
+
+kafka client 라이브러리를 사용해 java 또는 scala 같은 언어로 kafka consumer를 구현할 수 있다.   
+이때 구현한 kafka consumer 객체를 통해 현재 lag 정보를 가져온다.   
+만약 lag을 실시간으로 모니터링 하고 싶다면 데이터를 Elasticsearch, InfluxDB와 같은 저장소에 넣은 뒤 Grafana 대시보드를 통하는 방법을 사용할 수 있다.
+
+consumer 단위에서 lag을 모니터링하는 것은 아주 위험하고 운영 요소가 많이 들어간다.   
+그 이유는 consumer 로직단에서 lag을 수집하는 것은 consumer 상태에 dependency가 걸리기 때문이다.
+
+- consumer가 비정상적으로 종료되면 consumer는 lag 정보를 보낼 수 없기 때문에 더이상 lag을 측정할 수 없다.
+- consumer가 개발될 때마다 해당 consumer에 lag 정보를 특정 저장소에 저장할 수 있도록 로직을 개발해야 한다. 만약 consumer lag을 수집할 수 없는 consumer라면 모니터링 할 수 없어 운영이 매우 까다로워 진다.
+
+따라서 LinkedIn에서는 apache kafka와 함께 kafka의 consumer lag을 효과적으로 모니터링할 수 있도록 burrow를 배포했다.
+
+---
+
+### 1. Burrow의 특징
+
+burrow는 오픈소스로서 Golang으로 작성되었고 현재 깃허브에 올라와있다.   
+consumer lag 모니터링을 도와주는 독립적인 애플리케이션다.
+
+burrow는 3가지 큰 특징을 가지고 있다.
+
+- Multiple Kafka Cluster 지원
+
+kafka cluster를 운영하는 기업이라면 대부분 2개 이상의 kafka cluster를 운영하고 있다. cluster가 여러개더라도 burrow application 1개만 실행해서 연동하면 cluster들에 붙은 consumer lag을 모두 모니터링 할 수 있다.
+
+- Sliding window를 통한 Consumer의 status 확인
+
+sliding window를 통해서 consumer의 status를 ERROR, WARNING, OK로 표현할 수 있도록 했다.   
+
+데이터의 양이 일시적으로 많아지면서 consumer offset이 증가되고 있으면 WARNING으로 정의된다.   
+데이터의 양이 많아지고 있는데 consumer가 데이터를 가져가지 않으면 ERROR로 정의된다.
+
+- HTTP api 제공
+
+위와 같은 정보들을 burrow가 정의한 HTTP api를 통해 조회할 수 있다.   
+범용적으로 사용되는 HTTP를 사용해 다양한 추가 생태계를 구축할 수 있게 된다. HTTP api를 호출해서 response 받은 데이터를 시계열 DB와 같은 곳에 저장하는 application을 만들어 활용할 수도 있다. 
+
+---
+
+### 2. 결론
+Burrow를 도입한다고 모든 문제가 해결되는 것은 아니다. 다만 kafka 개발자, kafka cluster 운영자가 효과적으로 kafka 관련 애플리케이션을 운영할 때 반드시 필요하며 burrow를 통해 수집된 데이터는 결국 추후 애플리케이션 개발과 운영에 많은 도움이 된다.
+
+---
+
+### 3. 참고 링크
+[Burrow github](https://github.com/linkedin/Burrow)   
+[Burrow 소개](https://blog.voidmainvoid.net/243)   
+[Burrow의 Consumer status 확인 방법](https://blog.voidmainvoid.net/244)   
+[Burrow http endpoint 정리](https://blog.voidmainvoid.net/245)
