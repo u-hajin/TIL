@@ -4,8 +4,8 @@
 
 - [Database Fundamentals](https://github.com/usuyn/TIL/tree/master/database/fundamentals)
   - [데이터베이스 시스템](https://github.com/usuyn/TIL/blob/master/database/fundamentals/db-system.md)
+  - [데이터베이스 모델링](https://github.com/usuyn/TIL/blob/master/database/fundamentals/db-modeling.md)
 
 ## Kafka
 
 - [Apache Kafka for Beginners](https://github.com/usuyn/TIL/blob/master/kafka/apache-kafka-for-beginners.md)
-
