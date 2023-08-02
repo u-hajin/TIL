@@ -5,6 +5,7 @@
 - [Database Fundamentals](https://github.com/usuyn/TIL/tree/master/database/fundamentals)
   - [데이터베이스 시스템](https://github.com/usuyn/TIL/blob/master/database/fundamentals/db-system.md)
   - [데이터베이스 모델링](https://github.com/usuyn/TIL/blob/master/database/fundamentals/db-modeling.md)
+  - [개념적 데이터 모델링](https://github.com/usuyn/TIL/blob/master/database/fundamentals/conceptual-modeling.md)
 
 ## Kafka
 
