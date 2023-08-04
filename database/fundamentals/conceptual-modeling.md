@@ -6,6 +6,8 @@
 2. [요구 사항 분석](#요구-사항-분석)
 3. [개념적 설계](#개념적-설계)
    - [개체와 속성 추출](#개념적-설계---개체와-속성-추출)
+   - [관계 추출](#개념적-설계---관계-추출)
+   - [E-R 다이어그램 작성](#개념적-설계---e-r-다이어그램-작성)
 
 ## 데이터베이스 설계 단계
 
@@ -125,7 +127,7 @@ $\rightarrow$ 한빛 마트 요구 사항 명세서에서의 명사를 선별한
 
 ### 개체와 속성을 추출한 최종 결과
 
-<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8a484f78-58c0-4269-ae9a-6d31b131db1d">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/68ac160c-ac01-4e9d-8330-e4c63b34725c">
 
 ### 개체들의 E-R 다이어그램
 
@@ -136,3 +138,101 @@ $\rightarrow$ 회원, 상품 개체의 E-R 다이어그램
 <img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/749e811f-d4bf-42f6-849e-8c459b508da0">
 
 $\rightarrow$ 제조업체, 게시글 개체의 E-R 다이어그램
+
+## 개념적 설계 - 관계 추출
+
+### 관계
+
+$\rightarrow$ 개체 간의 의미 있는 연관성
+
+### 관계 추출 방법
+
+$\rightarrow$ 요구 사항 문장에서 개체 간의 연관성을 의미 있게 표현한 동사를 찾는다. 찾아낸 관계에 대해 매핑 카디널리티와 참여 특성을 결정한다.
+
+- 의미가 같은 동사가 여러개일 경우 대표 명사 하나만 선택
+- 매핑 카디널리티 : 일대일(1:1), 일대다(1:n), 다대다(n:m)
+- 참여 특성 : 필수적 참여 / 선택적 참여
+
+### 관계 추출 예시 1
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/c1e9bc1f-c851-4be4-b78e-b44aff46a98c">
+
+$\rightarrow$ 요구 사항 문장에서 동사를 선별한 예
+
+- "입력해야 한다"는 개체와 개체의 관계를 표현하는 동사로 볼 수 없으므로 제외
+- "부여된다"는 개체와 개체의 관계를 표현하는 동사로 볼 수 없으므로 제외
+- "식별한다"는 개체와 개체의 관계를 표현하는 동사로 볼 수 없으므로 제외
+
+### 관계 추출 예시 2
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8069d497-a2ad-4f42-a9b2-549cb374a64b">
+
+$\rightarrow$ 요구 사항 문장에서 동사를 선별한 예
+
+- 관계 : 주문
+  - "회원" 개체와 "상품" 개체가 맺는 관계, 다대다(n:m) 관계
+  - "회원" 개체는 관계에 선택적으로 참여
+  - "상품" 개체는 관계에 선택적으로 참여
+- "주문" 관계의 속성 : 주문번호, 주문수량, 배송지, 주문일자
+
+회원은 상품을 여러개 주문할 수 있다.  
+상품은 여러명의 회원에게 주문될 수 있다.  
+$\rightarrow$ 다대다(n:m) 관계
+
+상품을 한번도 주문하지 않아도 회원 개체가 인스턴스로서 존재할 수 있다. $\rightarrow$ 선택적 참여  
+상품이 하나도 주문되지 않아도 상품 개체가 인스턴스로서 존재할 수 있다. $\rightarrow$ 선택적 참여
+
+### 관계 추출 예시 3
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/efccb6ce-f83b-46aa-a0bc-ebce8138c11d">
+
+$\rightarrow$ 요구 사항 문장에서 동사를 선별한 예
+
+- 관계 : 공급
+  - "제조업체" 개체와 "상품" 개체가 맺는 관계, 일대다(1:n) 관계
+  - "상품" 개체는 관계에 필수적으로 참여
+  - "제조업체" 개체는 관계에 선택적으로 참여
+- "공급" 관계의 속성 : 공급일자, 공급량
+
+제조업체는 상품을 여러개 공급할 수 있다.  
+상품은 하나의 제조업체에 의해 공급된다.  
+$\rightarrow$ 일대다(1:n) 관계
+
+제조업체 없이는 상품 개체가 존재할 수 없다. $\rightarrow$ 필수적 참여  
+상품을 하나도 공급하지 않아도 제조업체 개체가 인스턴스로서 존재할 수 있다. $\rightarrow$ 선택적 참여
+
+### 관계 추출 예시 4
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/df10ee2d-7916-4e25-9dcf-c4c4c817521d">
+
+$\rightarrow$ 요구 사항 문장에서 동사를 선별한 예
+
+- 관계 : 작성
+  - "회원" 개체와 "게시글" 개체가 맺는 관계, 일대다(1:n) 관계
+  - "회원" 개체는 관계에 선택적으로 참여
+  - "게시글" 개체는 관계에 필수적으로 참여
+
+회원은 게시글을 여러개 작성할 수 있다.  
+게시글은 한명의 회원에 의해서만 작성된다.  
+$\rightarrow$ 일대다(1:n) 관계
+
+게시글을 작성하지 않아도 회원 개체가 인스턴스로서 존재할 수 있다. $\rightarrow$ 선택적 참여  
+게시글은 회원이 작성해야만 존재할 수 있다. $\rightarrow$ 필수적 참여
+
+### 관계를 추출한 최종 결과
+
+<img width="560" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/0bb2a02a-a434-479a-9d9c-359f90b6c2ca">
+
+### 개체, 관계 E-R 다이어그램
+
+<img width="600" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/af8e6e87-efbf-4d64-bba1-68ea89ac18c7">
+
+<img width="600" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8ed6e3a3-550b-4ab0-b5bc-82f663df7be7">
+
+<img width="600" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/78c542a4-a2c0-4b88-9058-b1442b6566a5">
+
+## 개념적 설계 - E-R 다이어그램 작성
+
+<img width="700" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/f40f74c7-f6c0-4da7-9632-6ab48622a753">
+
+$\rightarrow$ 요구 사항 명세서를 개념적 스키마로 작성한 결과
