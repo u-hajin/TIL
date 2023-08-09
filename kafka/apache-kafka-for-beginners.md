@@ -273,10 +273,10 @@ Burrow를 도입한다고 모든 문제가 해결되는 것은 아니다. 다만
 
 aws의 ec2 서버 3대를 발급받아 카프카를 설치하고 console producer, console consumer로 연동한다.
 
-apache kafka를 설치하기 위해서는 2가지 애플리케이션이 필요
+apache kafka를 설치하기 위해서는 2가지 애플리케이션이 필요하다
 
-- 주키퍼: 카프카 관련 정보를 저장하는 역할
-- 카프카
+- Zookeeper: 카프카 관련 정보를 저장하는 역할
+- Kafka
 
 ### EC2 인스턴스 발급
 
@@ -426,9 +426,9 @@ kafka 실행을 위해 broker.id, listener, zookeeper 설정이 필요하다.
 <img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/c8e15131-f043-4900-819b-1d9ae7cd6278">
 
 ```
-broker.id=0(test-broker01은 0, 02는 1, 03은 2)
+broker.id=0 // test-broker01은 0, 02는 1, 03은 2
 listeners=PLAINTEXT://:9092
-advertised.listeners=PLAINTEXT://test-broker01:9092
+advertised.listeners=PLAINTEXT://test-broker01:9092 // 각 test-broker마다 01, 02, 03
 zookeeper.connect=test-broker01:2181,test-broker02:2181,test-broker03/test
 ```
 
@@ -460,13 +460,13 @@ zookeeper 설정 시 /test와 같이 route를 넣으면 zookeeper의 root node�
 sudo vi kafka-server-start.sh
 ```
 
-<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/65ab34c2-7037-4efb-8f1c-5cf9781394e4">
-
 KAFKA_HEAP_OPTS의 export문을 아래처럼 수정한다.
 
 ```
 export KAFKA_HEAP_OPTS="-Xmx256M -Xms128M"
 ```
+
+<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/65ab34c2-7037-4efb-8f1c-5cf9781394e4">
 
 여기까지 진행하면 kafka 클러스터 구축 및 실행이 완료된 것이다.
 
