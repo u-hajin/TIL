@@ -1,5 +1,35 @@
 > [아파치 카프카 입문](https://www.inflearn.com/course/아파치-카프카-입문) 강의를 보고 정리합니다.
 
+## 목차
+
+1. [아파치 카프카 개요 및 설명](#아파치-카프카-개요-및-설명)
+   - [Before Kafka](#1-before-kafka)
+   - [Kafka 주변 생태계](#2-kafka-주변-생태계)
+   - [결론](#3-결론)
+2. [Topic이란?](#topic이란)
+   - [Topic](#1-topic)
+   - [Topic 내부, Partition](#2-topic-내부-partition)
+   - [Partition이 2개 이상인 경우](#3-partition이-2개-이상인-경우)
+   - [Partition을 늘리는 것](#4-partition을-늘리는-것)
+   - [Partition의 Record가 삭제되는 시점](#5-partition의-record가-삭제되는-시점)
+3. [Consumer Lag이란?](#consumer-lag이란)
+4. [Consumer Lag Monitoring Application, Kafka Burrow](#consumer-lag-monitoring-application-kafka-burrow)
+   - [Burrow의 특징](#1-burrow의-특징)
+   - [결론](#2-결론)
+   - [참고 링크](#3-참고-링크)
+5. [Message Broker, Event Broker(Kafka, RabbitMQ, Redis Queue의 차이점)](#message-broker-event-brokerkafka-rabbitmq-redis-queue의-차이점)
+   - [Message Broker](#1-message-broker)
+   - [Event Broker](#2-event-broker)
+6. [AWS에 Kafka cluster 설치, 실행](#aws에-kafka-cluster-설치-실행)
+   - [EC2 인스턴스 발급](#ec2-인스턴스-발급)
+   - [security group inbound 규칙 설정](#security-group-inbound-규칙-설정)
+   - [/etc/hosts 설정](#etchosts-설정)
+   - [Zookeeper 설치](#zookeeper-설치)
+   - [Zookeeper 실행](#zookeeper-실행)
+   - [Kafka 설치](#kafka-설치)
+   - [Kafka 실행](#kafka-실행)
+   - [console-producer, consumer 테스트](#console-producer-consumer-테스트)
+
 ## 아파치 카프카 개요 및 설명
 
 ### **1. Before Kafka**
