@@ -171,6 +171,69 @@ log.retention.byte
 
 위 방법을 통해 일정한 기간 혹은 용량만큼 데이터를 저장할 수 있게 되며, 적절한 시점에 데이터가 삭제되게 설정할 수 있다.
 
+## Broker, Replication, In-Sync Replica
+
+Broker, Replication, ISR(In-Sync Replica)은 kafka 운영에 있어서 아주 중요한 역할을 한다.  
+kafka 아키텍처의 핵심인 replication(복제)은 클러스터에서 서버에 장애가 생겼을 때 kafka의 가용성을 보장하는 가장 좋은 방법이다.
+
+### Kafka Broker
+
+kafka broker란 kafka가 설치되어 있는 서버 단위이다.  
+보통 3개 이상의 broker를 구성해 사용하는 것을 권장한다.
+
+만약 partition이 1개이고 replication이 1인 topic이 존재하며 broker가 3대라면 3대 중 1대에 해당 topic의 정보(데이터)가 저장된다.
+
+### Kafka Replication
+
+replication은 partition의 복제이다.
+
+- **replication : 1** $\rightarrow$ partition 1개만 존재
+
+- **replication : 2** $\rightarrow$ 원본 partition 1개 + 복제본 partition 1개
+
+- **replication : 3** $\rightarrow$ 원본 partition 1개 + 복제본 partition 2개
+
+다만 broker 개수에 따라 replication 개수가 제한된다. broker가 3인 경우 replication는 4가 될 수 없다.
+
+원본 partition은 Leader partition이라고 부른다.  
+나머지 복제본 partition은 Follower partition이라고 부른다.
+
+### Kafka ISR(In-Sync Replica)
+
+leader partition과 follower partition들의 그룹이다.  
+그룹에 속해있다는 것은 leader의 데이터와 동기화되어 있다는 것을 의미하며 leader에 문제가 생길 시 언제든 그 자리를 대신할 수 있게 된다.
+
+### Why replicate?
+
+partition의 고가용성을 위해 사용된다.
+
+만약 broker가 3개인 kafka에서 replication가 1이고 partition이 1인 topic이 존재한다고 가정한다. 갑자기 broker가 어떠한 이유로 사용할 수 없게 되면 더이상 해당 partition은 복구할 수 없다.  
+만약 replication가 2이면 broker 1개가 죽더라도 복제본 즉, follower partition이 존재하므로 복구가 가능하다. 해당 follower partition이 리더 partition 역할을 승계하게 된다.
+
+### Replication & ack
+
+producer가 topic의 partition에 데이터를 전달한다. producer가 topic의 partition에 데이터를 전달할 때 전달받는 주제가 바로 leader partition이다.
+
+producer에는 ack라는 상세 옵션이 있다. ack를 통해 고가용성을 유지할 수 있는데 이 옵션은 partition의 replication와 관련이 있다.
+
+ack는 0, 1, all 옵션 3개 중 한개를 골라 설정할 수 있다.
+
+- **ack : 0** $\rightarrow$ producer는 leader partition에 데이터를 전송하고 응답값을 받지 않는다. leader partition에 데이터가 정상적으로 전송됐는지, 나머지 partition에 정상적으로 복제됐는지 알 수 없고 보장할 수 없다. 속도는 빠르나 데이터 유실 가능성이 있다.
+
+- **ack : 1** $\rightarrow$ producer는 leader partition에 데이터를 전송하고 응답값을 받는다. 하지만 나머지 partition에 정상적으로 복제됐는지 알 수 없다.  
+  leader partition이 데이터를 받은 즉시 브로커에 장애가 생기면 나머지 partition에 데이터가 전송되지 못한 상태이므로 데이터 유실 가능성이 있다.
+
+- **ack : all** $\rightarrow$ producer는 leader partition에 데이터를 전송하고 응답값을 받으며 나머지 follower partition에 복제가 잘 이루어졌는지에 대한 응답값도 받는다.  
+  데이터 유실 가능성은 없으나 옵션 0, 1에 비해 확인하는 부분이 많기 때문에 속도가 현저히 느리다는 단점이 있다.
+
+### Replication count
+
+replication이 고가용성을 위해 중요한 역할을 하지만 많을수록 좋은 것은 아니다.  
+replication 개수가 많아지면 그만큼 broker의 리소스 사용량도 늘어난다.
+
+따라서 kafka에 들어오는 데이터의 양과 retention date(저장 시간)를 잘 생각해 replication 개수를 정하는 것이 좋다.  
+3개 이상의 broker를 사용할 때 replication는 3으로 설정하는 것을 추천한다.
+
 ## Consumer Lag이란?
 
 kafka를 운영함에 있어 아주 중요한 모니터링 지표이다.
