@@ -187,7 +187,7 @@ kafka 아키텍처의 핵심인 replication(복제)은 클러스터에서 서버
 kafka broker란 kafka가 설치되어 있는 서버 단위이다.  
 보통 3개 이상의 broker를 구성해 사용하는 것을 권장한다.
 
-<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/fab4327c-c107-4f8a-be9c-8ddf72a293ac">
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/fab4327c-c107-4f8a-be9c-8ddf72a293ac">
 
 만약 partition이 1개이고 replication이 1인 topic이 존재하며 broker가 3대라면 3대 중 1대에 해당 topic의 정보(데이터)가 저장된다.
 
@@ -201,18 +201,18 @@ replication은 partition의 복제이다.
 
 - **replication : 3** $\rightarrow$ 원본 partition 1개 + 복제본 partition 2개
 
-<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/2bdc3ad6-a0fb-43a0-abc3-ae732de030c6">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/2bdc3ad6-a0fb-43a0-abc3-ae732de030c6">
 
-<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/fa6fa585-0372-432d-92da-a0c72eeee6b0">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/fa6fa585-0372-432d-92da-a0c72eeee6b0">
 
-<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/88564b2f-9cbf-4ce8-bf82-b9a388a416fb">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/88564b2f-9cbf-4ce8-bf82-b9a388a416fb">
 
 다만 broker 개수에 따라 replication 개수가 제한된다. broker가 3인 경우 replication는 4가 될 수 없다.
 
 원본 partition은 Leader partition이라고 부른다.  
 나머지 복제본 partition은 Follower partition이라고 부른다.
 
-<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/8ba1d6c6-05eb-4545-8421-fc40b8adc118">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8ba1d6c6-05eb-4545-8421-fc40b8adc118">
 
 ### Kafka ISR(In-Sync Replica)
 
@@ -244,9 +244,11 @@ ack는 0, 1, all 옵션 3개 중 한개를 골라 설정할 수 있다.
 - **ack : all** $\rightarrow$ producer는 leader partition에 데이터를 전송하고 응답값을 받으며 나머지 follower partition에 복제가 잘 이루어졌는지에 대한 응답값도 받는다.  
   데이터 유실 가능성은 없으나 옵션 0, 1에 비해 확인하는 부분이 많기 때문에 속도가 현저히 느리다는 단점이 있다.
 
-<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/d887c5f4-8eba-4234-a64b-f7293cc9bf49">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/d887c5f4-8eba-4234-a64b-f7293cc9bf49">
 
-<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/17b77c9f-395f-4b26-a42e-dfc0df774566">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/214cf259-e3c6-41b1-8893-70c46d64ee22">
+
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/a2793c5e-912b-4a10-9156-a82654e764c1">
 
 ### Replication count
 
@@ -268,7 +270,7 @@ $\rightarrow$ producer가 넣은 데이터의 offset, consumer가 가져간 데�
 
 이것이 바로 consumer lag이다.
 
-<img width="250" height="auto" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/180b61f1-df97-4d75-b513-a4e9871a8974">
+<img width="250" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/180b61f1-df97-4d75-b513-a4e9871a8974">
    
 lag의 숫자를 통해 해당 topic에 대해 파이프라인으로 연계되어 있는 producer와 consumer 상태 유추가 가능하다. 주로 consumer의 상태를 볼 때 사용한다.
 
@@ -277,7 +279,7 @@ consumer 그룹이 1개이고, partition이 2개인 topic에서 데이터를 가
 
 이렇게 1개의 topic과 consumer 그룹에 대한 lag이 여러개 존재할 수 있을 때, 그 중 높은 숫자의 lag을 records-lag-max라고 한다.
 
-<img width="300" height="auto" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/d3dbb0e1-5c98-424b-82a4-a023e19d70ae">
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/d3dbb0e1-5c98-424b-82a4-a023e19d70ae">
    
 consumer의 성능이 안 나오거나 비정상적인 동작을 하면 lag이 필연적으로 발생해 주의 깊게 살펴본다.
 
