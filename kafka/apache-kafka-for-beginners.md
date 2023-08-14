@@ -12,7 +12,13 @@
    - [Partition이 2개 이상인 경우](#3-partition이-2개-이상인-경우)
    - [Partition을 늘리는 것](#4-partition을-늘리는-것)
    - [Partition의 Record가 삭제되는 시점](#5-partition의-record가-삭제되는-시점)
-3. [Broker, Replication, In-Sync Replica]()
+3. [Broker, Replication, In-Sync Replica](#broker-replication-in-sync-replica)
+   - [Broker](#kafka-broker)
+   - [Replication](#kafka-replication)
+   - [ISR](#kafka-isrin-sync-replica)
+   - [Why replicate?](#why-replicate)
+   - [Replication & ack](#replication--ack)
+   - [Replication count](#replication-count)
 4. [Partitioner란?]()
 5. [Consumer Lag이란?](#consumer-lag이란)
 6. [Consumer Lag Monitoring Application, Kafka Burrow](#consumer-lag-monitoring-application-kafka-burrow)
@@ -181,6 +187,8 @@ kafka 아키텍처의 핵심인 replication(복제)은 클러스터에서 서버
 kafka broker란 kafka가 설치되어 있는 서버 단위이다.  
 보통 3개 이상의 broker를 구성해 사용하는 것을 권장한다.
 
+<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/fab4327c-c107-4f8a-be9c-8ddf72a293ac">
+
 만약 partition이 1개이고 replication이 1인 topic이 존재하며 broker가 3대라면 3대 중 1대에 해당 topic의 정보(데이터)가 저장된다.
 
 ### Kafka Replication
@@ -193,15 +201,25 @@ replication은 partition의 복제이다.
 
 - **replication : 3** $\rightarrow$ 원본 partition 1개 + 복제본 partition 2개
 
+<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/2bdc3ad6-a0fb-43a0-abc3-ae732de030c6">
+
+<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/fa6fa585-0372-432d-92da-a0c72eeee6b0">
+
+<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/88564b2f-9cbf-4ce8-bf82-b9a388a416fb">
+
 다만 broker 개수에 따라 replication 개수가 제한된다. broker가 3인 경우 replication는 4가 될 수 없다.
 
 원본 partition은 Leader partition이라고 부른다.  
 나머지 복제본 partition은 Follower partition이라고 부른다.
 
+<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/8ba1d6c6-05eb-4545-8421-fc40b8adc118">
+
 ### Kafka ISR(In-Sync Replica)
 
 leader partition과 follower partition들의 그룹이다.  
 그룹에 속해있다는 것은 leader의 데이터와 동기화되어 있다는 것을 의미하며 leader에 문제가 생길 시 언제든 그 자리를 대신할 수 있게 된다.
+
+<img width="400" alt="Screenshot 2023-08-14 at 23 47 08" src="https://github.com/usuyn/TIL/assets/68963707/7a197fda-0b1a-4601-990c-5bc7abd4e1d2">
 
 ### Why replicate?
 
@@ -225,6 +243,10 @@ ack는 0, 1, all 옵션 3개 중 한개를 골라 설정할 수 있다.
 
 - **ack : all** $\rightarrow$ producer는 leader partition에 데이터를 전송하고 응답값을 받으며 나머지 follower partition에 복제가 잘 이루어졌는지에 대한 응답값도 받는다.  
   데이터 유실 가능성은 없으나 옵션 0, 1에 비해 확인하는 부분이 많기 때문에 속도가 현저히 느리다는 단점이 있다.
+
+<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/d887c5f4-8eba-4234-a64b-f7293cc9bf49">
+
+<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/17b77c9f-395f-4b26-a42e-dfc0df774566">
 
 ### Replication count
 
