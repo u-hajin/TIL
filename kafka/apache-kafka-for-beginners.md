@@ -19,7 +19,9 @@
    - [Why replicate?](#why-replicate)
    - [Replication & ack](#replication--ack)
    - [Replication count](#replication-count)
-4. [Partitioner란?]()
+4. [Partitioner란?](#partitioner란)
+   - [메시지 키의 유무](#메시지-키의-유무)
+   - [Custom Partitioner](#custom-partitioner)
 5. [Consumer Lag이란?](#consumer-lag이란)
 6. [Consumer Lag Monitoring Application, Kafka Burrow](#consumer-lag-monitoring-application-kafka-burrow)
    - [Burrow의 특징](#1-burrow의-특징)
@@ -257,6 +259,56 @@ replication 개수가 많아지면 그만큼 broker의 리소스 사용량도 �
 
 따라서 kafka에 들어오는 데이터의 양과 retention date(저장 시간)를 잘 생각해 replication 개수를 정하는 것이 좋다.  
 3개 이상의 broker를 사용할 때 replication는 3으로 설정하는 것을 추천한다.
+
+## Partitioner란?
+
+partitioner는 kafka producer의 주요 개념 중 하나이다.  
+partitioner를 알면 파티션을 더 효과적으로 쓸 수 있다.
+
+producer가 데이터를 보내면 무조건 partitioner를 통해 broker로 데이터가 전송된다.
+partitioner는 데이터를 토픽의 어느 파티션에 넣을지 결정하는 역할을 한다. 파티션의 위치는 레코드에 포함된 메시지 키 또는 메시지 값에 따라 결정된다.
+
+producer를 사용할 때 partitioner를 따로 설정하지 않으면 UniformStickyPartitioner로 설정되는데 이 partitioner는 메시지 키가 있을 때와 없을 때 다르게 동작한다.
+
+### 메시지 키의 유무
+
+- 메시지 키가 있는 경우
+
+  $\rightarrow$ 메시지 키를 가진 레코드는 partitioner에 의해서 특정한 hash 값이 생성된다. 이 hash 값을 기준으로 어떤 파티션에 들어갈지 결정한다.  
+   동일한 메시지 키를 가진 레코드는 동일한 hash 값을 만들어내므로 항상 같은 파티션에 들어가는 것을 보장한다.  
+   또한 동일한 파티션에 들어가기 때문에 순서를 지켜서 데이터를 처리할 수 있다는 장점이 있다.
+
+토픽에 파티션이 2개 있다고 가정하면  
+partitioner의 hash 로직에 의해 서울은 파티션 0번, 부산은 1번, 울산은 0번으로 들어갈 수 있다.
+
+예로 서울의 온도를 기록하는 레코드를 파티션에 넣는다고 가정하면  
+메시지 키에 "서울"이라는 String 값을 넣고 레코드를 지속적으로 보낸다면 항상 동일한 파티션에 데이터가 순서대로 들어가기 때문에 consumer는 서울이라는 레코드를 순서를 지켜서 데이터를 처리할 수 있다.
+
+파티션 1개 내부에서는 queue처럼 동작하기 때문에 순서를 지킬 수 있게 되는 것이다.
+
+- 메시지 키가 없는 경우
+
+  $\rightarrow$ 메시지 키가 없는 레코드는 round-robin 방식으로 파티션에 들어간다.  
+  전통적인 round-robin 방식과는 조금 다르게 동작한다.
+
+UniformStickyPartitioner는 producer에서 배치로 모을 수 있는 최대한의 레코드들을 모아서 파티션으로 데이터를 보내게 된다.  
+이렇게 배치 단위로 데이터를 보낼 때 파티션에 round-robin 방식으로 돌아가면서 데이터를 넣게 된다.  
+쉽게 말해 메시지 키가 없는 레코드들은 파티션에 적절히 분배되는 방식이다.
+
+### Custom Partitioner
+
+직접 개발한 partitioner도 producer에서 설정할 수 있다.  
+kafka에서는 custom partitioner를 만들 수 있도록 partitioner 인터페이스를 제공하고 있다.
+
+partitioner 인터페이스를 사용해 custom partitioner를 만들면 메시지 키 또는 메시지 값 또는 토픽 이름에 따라서 어느 파티션에 데이터를 보낼 것인지 정할 수 있다.
+
+- custom partitioner 사용 예시
+
+  $\rightarrow$ VIP 고객을 위해 데이터 처리를 더 빠르게 하는 로직을 생각한다면 partitioner를 통해서 처리량을 늘릴 수 있다.  
+  10개의 파티션이 있다고 가정할 때 custom partitioner를 만들어서 8개의 파티션에는 VIP 고객의 데이터를 넣고, 나머지 2개 파티션에는 일반 고객의 데이터를 넣는다.  
+  이와 같이 데이터 처리량을 VIP 고객을 위해 몰아주는 형태로 개발 가능하다.
+
+  AMQP 기반 메시징 시스템에서 우선순위 queue를 만드는 것과 비슷하다.
 
 ## Consumer Lag이란?
 
