@@ -221,7 +221,7 @@ replication은 partition의 복제이다.
 leader partition과 follower partition들의 그룹이다.  
 그룹에 속해있다는 것은 leader의 데이터와 동기화되어 있다는 것을 의미하며 leader에 문제가 생길 시 언제든 그 자리를 대신할 수 있게 된다.
 
-<img width="400" alt="Screenshot 2023-08-14 at 23 47 08" src="https://github.com/usuyn/TIL/assets/68963707/7a197fda-0b1a-4601-990c-5bc7abd4e1d2">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/7a197fda-0b1a-4601-990c-5bc7abd4e1d2">
 
 ### Why replicate?
 
@@ -268,6 +268,8 @@ partitioner를 알면 파티션을 더 효과적으로 쓸 수 있다.
 producer가 데이터를 보내면 무조건 partitioner를 통해 broker로 데이터가 전송된다.
 partitioner는 데이터를 토픽의 어느 파티션에 넣을지 결정하는 역할을 한다. 파티션의 위치는 레코드에 포함된 메시지 키 또는 메시지 값에 따라 결정된다.
 
+<img width="200" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/87ec4653-2adc-43ad-8661-743c0dfb477c">
+
 producer를 사용할 때 partitioner를 따로 설정하지 않으면 UniformStickyPartitioner로 설정되는데 이 partitioner는 메시지 키가 있을 때와 없을 때 다르게 동작한다.
 
 ### 메시지 키의 유무
@@ -278,8 +280,12 @@ producer를 사용할 때 partitioner를 따로 설정하지 않으면 UniformSt
    동일한 메시지 키를 가진 레코드는 동일한 hash 값을 만들어내므로 항상 같은 파티션에 들어가는 것을 보장한다.  
    또한 동일한 파티션에 들어가기 때문에 순서를 지켜서 데이터를 처리할 수 있다는 장점이 있다.
 
+<img width="200" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/f9cc70ef-99cd-44f2-a5e8-1766868f460b">
+
 토픽에 파티션이 2개 있다고 가정하면  
 partitioner의 hash 로직에 의해 서울은 파티션 0번, 부산은 1번, 울산은 0번으로 들어갈 수 있다.
+
+<img width="200" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/66ce2040-a22f-4e76-92ac-e19bedb1bb7b">
 
 예로 서울의 온도를 기록하는 레코드를 파티션에 넣는다고 가정하면  
 메시지 키에 "서울"이라는 String 값을 넣고 레코드를 지속적으로 보낸다면 항상 동일한 파티션에 데이터가 순서대로 들어가기 때문에 consumer는 서울이라는 레코드를 순서를 지켜서 데이터를 처리할 수 있다.
