@@ -3,9 +3,11 @@
 ## 목차
 
 1. [데이터베이스 설계 단계](#데이터베이스-설계-단계)
-2. [논리적 설계](#논리적-설계)
-3. [릴레이션 스키마 변환 규칙](#릴레이션-스키마-변환-규칙)
+2. [개념적 데이터 모델링 결과](#개념적-데이터-모델링-결과)
+3. [논리적 설계](#논리적-설계)
+4. [릴레이션 스키마 변환 규칙](#릴레이션-스키마-변환-규칙)
    - [규칙 1 - 모든 개체는 릴레이션으로 변환](#규칙-1---모든-개체는-릴레이션으로-변환)
+   - [규칙 2 - 다대다 관계는 릴레이션으로 변환](#규칙-2---다대다-관계는-릴레이션으로-변환)
 
 ## 데이터베이스 설계 단계
 
@@ -18,6 +20,12 @@ $\rightarrow$ E-R 모델과 릴레이션 변환 규칙을 이용한 설계의 �
 <img width="560" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/24f1c409-8b12-433a-bf19-6ed28e250894">
 
 $\rightarrow$ 데이터베이스 설계 과정의 각 단계별 주요 작업과 결과물
+
+## 개념적 데이터 모델링 결과
+
+<img width="700" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/f40f74c7-f6c0-4da7-9632-6ab48622a753">
+
+$\rightarrow$ 요구 사항 명세서를 개념적 스키마로 작성한 결과
 
 ## 논리적 설계
 
@@ -76,7 +84,7 @@ E-R 다이어그램의 각 개체를 하나의 릴레이션으로 변환
 
 ### 예시 1
 
-<img width="450" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/4f828d39-46e1-4441-87d9-cb2e36c56573">
+<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/4f828d39-46e1-4441-87d9-cb2e36c56573">
 
 $\rightarrow$ 개체를 릴레이션으로 변환하는 규칙을 적용한 예
 
@@ -84,6 +92,30 @@ $\rightarrow$ 개체를 릴레이션으로 변환하는 규칙을 적용한 예
 
 ### 예시 2 - 복합 속성 가지는 개체 변환
 
-<img width="450" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/03d3f179-b672-4a24-990e-38f0b3bee3d8">
+<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/03d3f179-b672-4a24-990e-38f0b3bee3d8">
 
 $\rightarrow$ 복합 속성을 가지는 개체를 릴레이션으로 변환하는 예
+
+### 규칙 1 적용 결과
+
+[개념적 데이터 모델링](https://github.com/usuyn/TIL/blob/master/database/fundamentals/conceptual-modeling.md)의 결과물인 [E-R 다이어그램](#개념적-데이터-모델링-결과)에서 상품, 제조업체, 회원, 게시글 개체에 규칙 1을 적용한다.
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/03061bd7-1d6d-487d-b592-685fcead322a">
+
+## 규칙 2 - 다대다 관계는 릴레이션으로 변환
+
+E-R 다이어그램의 다대다 관계를 하나의 릴레이션으로 변환
+
+- **관계의 이름** $\rightarrow$ **릴레이션 이름**
+
+- **관계의 속성** $\rightarrow$ **릴레이션의 속성**
+
+- 관계에 참여하는 개체를 규칙 1에 따라 릴레이션으로 변환 후 **기본키를 관계 릴레이션에 포함**시켜 **외래키로** 지정하고 **외래키들을 조합해 관계 릴레이션의 기본키로** 지정
+
+### 예시
+
+<img width="650" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/6066b458-3b64-45c0-a360-c4aebc8ee42b">
+
+### 규칙 2 적용 결과
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/39a3f131-b5fb-42db-9367-091ca38dd2d2">
