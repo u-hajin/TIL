@@ -17,6 +17,7 @@
      - [규칙 4.3 - 모든 개체가 필수적으로 참여하면 릴레이션을 하나로 합친다.](#규칙-43---모든-개체가-필수적으로-참여하면-릴레이션을-하나로-합친다)
    - [규칙 5 - 다중 값 속성은 릴레이션으로 변환](#규칙-5---다중-값-속성은-릴레이션으로-변환)
    - [기타 고려 사항](#기타-고려-사항)
+5. [릴레이션 변환 결과](#릴레이션-변환-결과)
 
 ## 데이터베이스 설계 단계
 
@@ -125,6 +126,12 @@ E-R 다이어그램의 다대다 관계를 하나의 릴레이션으로 변환
 
 <img width="650" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/6066b458-3b64-45c0-a360-c4aebc8ee42b">
 
+'**주문**'이라는 관계를 **별도의 릴레이션**으로 변환한다.
+
+**고객 개체**의 키 속성인 **고객번호**, **상품 개체**의 키 속성인 **상품번호**를 주문 릴레이션의 **외래키로** 표현한다. 이 **외래키를 조합해 기본키로** 사용한다.
+
+또는 별도의 '**주문번호**'라는 **기본키를 만들어 사용**할 수도 있다.
+
 ### 규칙 2 적용 결과
 
 [개념적 데이터 모델링](https://github.com/usuyn/TIL/blob/master/database/fundamentals/conceptual-modeling.md)의 결과물인 [E-R 다이어그램](#개념적-데이터-모델링-결과)에서 상품, 회원 개체가 참여하는 주문 관계에 규칙 2를 적용한다.
@@ -145,9 +152,19 @@ E-R 다이어그램의 일대다 관계는 외래키로만 표현
 
 - **관계의 속성들도 n측 개체 릴레이션**에 포함
 
+예) 교수 개체와 학생 개체가 지도라는 관계에 참여하는 경우(일대다 관계)
+
+- 교수는 여러명의 학생을 지도한다.
+- 한명의 학생은 한명의 교수에게 지도 받는다.
+
+만약 교수(1측 개체) 릴레이션에 지도 학생을 외래키로 포함시키면 지도 학생은 다중 값을 가지게 된다.  
+$\rightarrow$ 릴레이션 속성의 원자성 위배
+
+따라서 n측 개체인 학생 릴레이션에 지도 교수라는 외래키를 포함시킨다.
+
 ### 규칙 3.1 예시
 
-<img width="650" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/489f05c1-6f75-4ac7-b4cf-564998ef81e8">
+<img width="650" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/489f05c1-6f75-4ac7-b4cf-564998ef81e8">
 
 $\rightarrow$ 일반적인 개체가 참여하는 일대다 관계를 외래키로 표현
 
@@ -162,15 +179,20 @@ $\rightarrow$ 일반적인 개체가 참여하는 일대다 관계를 외래키�
 
 ### 규칙 3.2 예시
 
-<img width="650" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/b7c409d3-3d63-4f90-94ed-1dca1255b340">
+<img width="650" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/b7c409d3-3d63-4f90-94ed-1dca1255b340">
 
 $\rightarrow$ 약한 개체가 참여하는 일대다 관계를 외래키로 표현
+
+- 하나의 비행기에 여러개 좌석이 존재한다.
+- 하나의 좌석은 하나의 비행기에 존재한다.
+
+비행기 번호를 좌석 릴레이션의 기본키에 포함시킨다.
 
 ### 규칙 3 적용 결과
 
 [개념적 데이터 모델링](https://github.com/usuyn/TIL/blob/master/database/fundamentals/conceptual-modeling.md)의 결과물인 [E-R 다이어그램](#개념적-데이터-모델링-결과)에서 공급(상품, 제조업체 개체 참여), 작성(회원, 게시글 개체 참여) 관계에 규칙 3을 적용한다.
 
-<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/67e21e3a-5940-4138-b59e-34714dbe9d42">
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/67e21e3a-5940-4138-b59e-34714dbe9d42">
 
 ## 규칙 4 - 일대일 관계는 외래키로 표현
 
@@ -192,7 +214,7 @@ E-R 다이어그램의 일대일 관계는 외래키로만 표현
 
 ### 규칙 4.1 예시
 
-<img width="550" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/e9bb260a-5a8e-4cb4-8397-35dc94d7385f">
+<img width="550" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/e9bb260a-5a8e-4cb4-8397-35dc94d7385f">
 
 $\rightarrow$ 일반적인 일대일 관계를 외래키로 표현
 
@@ -204,7 +226,7 @@ $\rightarrow$ 일반적인 일대일 관계를 외래키로 표현
 
 ### 규칙 4.2 예시
 
-<img width="550" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/9d657b4f-583c-4d01-9ce0-344eb32fe05a">
+<img width="550" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/9d657b4f-583c-4d01-9ce0-344eb32fe05a">
 
 $\rightarrow$ 일대일 관계에 필수적으로 참여하는 개체의 릴레이션이 외래키를 가지는 예
 
@@ -218,7 +240,7 @@ $\rightarrow$ 일대일 관계에 필수적으로 참여하는 개체의 릴레�
 
 ### 규칙 4.3 예시
 
-<img width="550" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/c2e1d1f3-22e1-45d3-8a31-24fb41227c80">
+<img width="550" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/c2e1d1f3-22e1-45d3-8a31-24fb41227c80">
 
 $\rightarrow$ 일대일 관계에 모든 개체가 필수적으로 참여하면 릴레이션을 통합하는 예
 
@@ -232,21 +254,21 @@ E-R 다이어그램의 다중 값 속성은 독립적인 릴레이션으로 변�
 
 ### 예시
 
-<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/0e1a1010-50c9-4722-a33e-f62d1e71cf81">
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/0e1a1010-50c9-4722-a33e-f62d1e71cf81">
 
 $\rightarrow$ 다중 값 속성인 부하직원 속성을 그대로 포함하는 사원 릴레이션
 
 사원 릴레이션은 속성에 다중 값을 저장할 수 없는 릴레이션 특성을 위반
 
-<img width="300" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/00893772-e586-4b4d-8d53-de26f0d8c45e">
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/00893772-e586-4b4d-8d53-de26f0d8c45e">
 
 $\rightarrow$ 릴레이션 특성에 맞게 부하직원 속성을 포함하는 사원 릴레이션
 
 사원 릴레이션은 릴레이션 특성을 위반하지 않지만 사원번호, 사원명, 직위 속성의 값이 불필요하게 중복 저장되는 문제 발생
 
-<img width="550" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/f886e0e1-d1bd-422b-9628-4cdf88214a20">
+<img width="550" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/f886e0e1-d1bd-422b-9628-4cdf88214a20">
 
-<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/8cd21ac3-3f7c-4f98-a4ea-5622623e4b64">
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8cd21ac3-3f7c-4f98-a4ea-5622623e4b64">
 
 $\rightarrow$ 규칙 5를 적용한 후의 사원 릴레이션과 사원 - 부하직원 릴레이션
 
@@ -258,8 +280,17 @@ $\rightarrow$ 규칙 5를 적용한 후의 사원 릴레이션과 사원 - 부�
 
   $\rightarrow$ 속성이 많은 관계는 유형에 상관없이 릴레이션으로의 변환을 고려할 수 있음
 
-  <img width="450" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/c97faf4b-75cd-4bc3-86e2-bbc0e86e79f9">
+  <img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/c97faf4b-75cd-4bc3-86e2-bbc0e86e79f9">
 
 - 개체가 자기 자신과 관계를 맺는 순환 관계도 기본 규칙을 그대로 적용
 
-  <img width="450" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/def02f4b-74f7-4ae9-815f-ef1e4f1c3e3a">
+  <img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/def02f4b-74f7-4ae9-815f-ef1e4f1c3e3a">
+
+  - 한명의 사원이 여러명의 부하사원을 관리한다.
+  - 한명의 사원이 한명의 상사에게 관리된다.
+
+## 릴레이션 변환 결과
+
+[개념적 데이터 모델링](https://github.com/usuyn/TIL/blob/master/database/fundamentals/conceptual-modeling.md)의 결과물인 [E-R 다이어그램](#개념적-데이터-모델링-결과)을 릴레이션으로 변환한 결과
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/435371c7-8c1a-4bbb-8870-136975d9f30f">
