@@ -39,6 +39,12 @@
    - [Kafka 설치](#kafka-설치)
    - [Kafka 실행](#kafka-실행)
    - [console-producer, consumer 테스트](#console-producer-consumer-테스트)
+9. [Kafka Producer Application](#kafka-producer-application)
+   - [Kafka Producer의 역할](#kafka-producer의-역할)
+   - [Producer Application 개발](#producer-application-개발)
+     - [Java Properties 객체를 통한 Producer 설정 및 생성](#java-properties-객체를-통한-producer-설정-및-생성)
+     - [ProducerRecord class 사용한 전송 객체 생성](#producerrecord-class-사용한-전송-객체-생성)
+     - [전송 및 종료](#전송-및-종료)
 
 ## 아파치 카프카 개요 및 설명
 
@@ -683,3 +689,125 @@ local machine(맥북)에서 kafka-console-producer와 kafka-console-consumer로 
 producer에 데이터를 입력하면 consumer에서 정상적으로 처리하는 것을 확인할 수 있다.
 
 <img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/99078072-a355-42f8-83eb-1f324601f60b">
+
+## Kafka Producer Application
+
+producer는 데이터를 카프카에 보내는 역할을 수행한다.
+
+엄청난 양의 클릭 로그들을 대량으로, 실시간으로 카프카에 적재할 때 producer를 사용한다.
+
+### Kafka Producer의 역할
+
+producer는 데이터를 producing 즉, 생산하는 역할을 한다. 데이터를 kafka topic에 생산한다.
+
+- Topic에 해당하는 메시지를 생성
+
+- 특정 Topic으로 데이터를 publish
+
+- 처리 실패 및 재시도
+
+### Producer Application 개발
+
+kafka client인 consumer와 producer를 사용하기 위해서는 apache kafka 라이브러리를 추가해야 한다. 라이브러리는 gradle, maven 도구를 사용해 편리하게 가져온다.
+
+```java
+// gradle
+compile group: 'org.apache.kafka', name: 'kafka-clients', version: '2.3.0'
+
+// maven
+<dependency>
+		<groupId>org.apache.kafka</groupId>
+		<artifactId>kafka-clients</artifactId>
+		<version>2.3.0</version>
+</dependency>
+```
+
+kafka client를 dependency로 잡을 때 버전을 주의해야 한다.
+kafka는 broker 버전과 client 버전의 하위 호환성을 모든 버전에 대해 지원하지 않는다.
+
+일부 kafka broker 버전은 특정 kafka client 버전을 지원하지 않을 수도 있다. broker와 client 버전의 하위 호환성에 대해 숙지하고 알맞은 kafka client 버전을 사용해야 한다.
+
+[Kafka broker와 java client의 버젼 하위호환성 정리](https://blog.voidmainvoid.net/193)
+
+```java
+public class Producer {
+  public static void main(String[] args) throws IOException {
+    Properties configs = new Properties();
+    configs.put("bootstrap.servers", "localhost:9092");
+    configs.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+    configs.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+    KafkaProducer < String, String > producer = new KafkaProducer < String, String > (configs);
+
+    ProducerRecord record = new ProducerRecord < String, String > ("click_log", "login");
+
+    producer.send(record);
+
+    producer.close();
+  }
+}
+```
+
+### Java Properties 객체를 통한 Producer 설정 및 생성
+
+```java
+Properties configs = new Properties();
+
+configs.put("bootstrap.servers", "localhost:9092");
+```
+
+$\rightarrow$ bootstrap 서버 설정을 localhost의 kafka를 바라보도록 설정한다.
+
+kafka broker의 주소 목록은 되도록 2개 이상의 ip, port를 설정하도록 권장된다. 둘 중 한개의 broker가 비정상일 경우 다른 정상적인 broker에 연결되어 사용 가능하기 때문이다.
+
+그러므로 실제로 애플리케이션을 kafka와 연동할 때 2개 이상의 broker 정보를 넣는 것을 추천한다.
+
+```java
+configs.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+configs.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+```
+
+$\rightarrow$ 나머지 key와 value에 대해 StringSerializer로 직렬화 설정한다.
+
+Byte array, String, Integer Serializer 모두 사용 가능하다.
+
+key는 메시지를 보내면 topic의 partition이 지정될 때 쓰인다.
+
+```java
+KafkaProducer < String, String > producer = new KafkaProducer < String, String > (configs);
+```
+
+$\rightarrow$ 설정 완료한 Properties 객체로 KafkaProducer 인스턴스를 생성한다.
+
+### ProducerRecord class 사용한 전송 객체 생성
+
+```java
+ProducerRecord record = new ProducerRecord < String, String > ("click_log", "login");
+```
+
+$\rightarrow$ key 없이 ProducerRecord 생성하는 경우
+
+kafka client에서는 ProducerRecord class를 제공한다.
+
+ProducerRecord 인스턴스 생성 시 어느 topic에 넣을 것인지, 어떤 key와 value를 담을 것인지 설정 가능하다.
+
+위 코드는 key 없이 'click_log' topic에 'login'이라는 value를 보낸다.
+
+```java
+ProducerRecord record = new ProducerRecord < String, String > ("click_log", "1", "login");
+```
+
+$\rightarrow$ key를 포함해 ProducerRecord 생성하는 경우
+
+파라미터 개수에 따라 자동으로 오버로딩되어 인스턴스 생성된다.
+
+### 전송 및 종료
+
+```java
+producer.send(record);
+
+producer.close();
+```
+
+전송이 이루어지며 'click_log' topic에 'login' value가 들어가게 된다.  
+전송이 완료되면 close를 통해 producer를 종료한다.
