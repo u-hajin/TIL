@@ -45,6 +45,15 @@
      - [Java Properties 객체를 통한 Producer 설정 및 생성](#java-properties-객체를-통한-producer-설정-및-생성)
      - [ProducerRecord class 사용한 전송 객체 생성](#producerrecord-class-사용한-전송-객체-생성)
      - [전송 및 종료](#전송-및-종료)
+10. [Kafka Consumer Application](#kafka-consumer-application)
+    - [Kafka Consumer의 역할](#kafka-consumer의-역할)
+    - [Consumer Application 개발](#consumer-application-개발)
+      - [Java Properties 객체를 통한 Consumer 설정 및 생성](#java-properties-객체를-통한-consumer-설정-및-생성)
+      - [대상 topic 지정](#대상-topic-지정)
+      - [polling loop](#polling-loop)
+    - [Producer에서 Consumer로 Message 전달](#producer에서-consumer로-message-전달)
+    - [Multiple Consumer](#multiple-consumer)
+    - [Different Groups](#different-groups)
 
 ## 아파치 카프카 개요 및 설명
 
@@ -272,7 +281,7 @@ partitioner는 kafka producer의 주요 개념 중 하나이다.
 partitioner를 알면 파티션을 더 효과적으로 쓸 수 있다.
 
 producer가 데이터를 보내면 무조건 partitioner를 통해 broker로 데이터가 전송된다.
-partitioner는 데이터를 토픽의 어느 파티션에 넣을지 결정하는 역할을 한다. 파티션의 위치는 레코드에 포함된 메시지 키 또는 메시지 값에 따라 결정된다.
+partitioner는 데이터를 topic의 어느 파티션에 넣을지 결정하는 역할을 한다. 파티션의 위치는 레코드에 포함된 메시지 키 또는 메시지 값에 따라 결정된다.
 
 <img width="200" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/87ec4653-2adc-43ad-8661-743c0dfb477c">
 
@@ -288,7 +297,7 @@ producer를 사용할 때 partitioner를 따로 설정하지 않으면 UniformSt
 
 <img width="200" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/f9cc70ef-99cd-44f2-a5e8-1766868f460b">
 
-토픽에 파티션이 2개 있다고 가정하면  
+topic에 파티션이 2개 있다고 가정하면  
 partitioner의 hash 로직에 의해 서울은 파티션 0번, 부산은 1번, 울산은 0번으로 들어갈 수 있다.
 
 <img width="200" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/66ce2040-a22f-4e76-92ac-e19bedb1bb7b">
@@ -312,7 +321,7 @@ UniformStickyPartitioner는 producer에서 배치로 모을 수 있는 최대한
 직접 개발한 partitioner도 producer에서 설정할 수 있다.  
 kafka에서는 custom partitioner를 만들 수 있도록 partitioner 인터페이스를 제공하고 있다.
 
-partitioner 인터페이스를 사용해 custom partitioner를 만들면 메시지 키 또는 메시지 값 또는 토픽 이름에 따라서 어느 파티션에 데이터를 보낼 것인지 정할 수 있다.
+partitioner 인터페이스를 사용해 custom partitioner를 만들면 메시지 키 또는 메시지 값 또는 topic 이름에 따라서 어느 파티션에 데이터를 보낼 것인지 정할 수 있다.
 
 - custom partitioner 사용 예시
 
@@ -742,7 +751,6 @@ public class Producer {
     ProducerRecord record = new ProducerRecord < String, String > ("click_log", "login");
 
     producer.send(record);
-
     producer.close();
   }
 }
@@ -811,3 +819,178 @@ producer.close();
 
 전송이 이루어지며 'click_log' topic에 'login' value가 들어가게 된다.  
 전송이 완료되면 close를 통해 producer를 종료한다.
+
+## Kafka Consumer Application
+
+데이터는 topic 내부의 partition에 저장된다. kafka consumer는 파티션에 저장된 데이터를 가져온다.
+데이터를 가져오는 것을 polling이라고 한다.
+
+### Kafka Consumer의 역할
+
+- Topic의 partition으로부터 데이터 polling
+
+  $\rightarrow$ topic 내부의 partition에서 메시지를 가져오는 것이다. 메시지를 가져와 특정 데이터베이스에 저장하거나 또 다른 파이프라인에 전달할 수 있다.
+
+- Partition offset 위치 기록(commit)
+  $\rightarrow$ offset(partition에 있는 데이터의 번호) 위치를 commit 한다.
+
+- Consumer group을 통해 병렬 처리
+  $\rightarrow$ consumer가 여러개일 때 병렬 처리를 할 수 있다. partition 개수에 따라 consumer를 여러개 만들면 병렬 처리가 가능해져 더 빠른 속도로 데이터를 처리한다.
+
+### Consumer Application 개발
+
+producer를 사용할 때처럼 라이브러리를 추가한다. 기본적으로 자바 라이브러리를 지원하며 Gradle, Maven 라이브러리 관리 도구를 사용할 수 있다.  
+마찬가지로 broker 버전과 client 버전의 호환성을 확인해야 한다.
+
+```java
+// gradle
+compile group: 'org.apache.kafka', name: 'kafka-clients', version: '2.3.0'
+
+// maven
+<dependency>
+		<groupId>org.apache.kafka</groupId>
+		<artifactId>kafka-clients</artifactId>
+		<version>2.3.0</version>
+</dependency>
+```
+
+```java
+public class Consumer {
+  public static void main(String[] args) {
+    Properties configs = new Properties();
+    configs.put("bootstrap.servers", "localhost:9092");
+    configs.put("group.id", "click_log_group");
+    configs.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+    configs.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+
+    KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(configs);
+
+    consumer.subscribe(Arrays.asList("click_log"));
+
+    while(true) {
+      ConsumerRecords<String, String> records = consumer.poll(500);
+      for(ConsumerRecord<String, String> record : records) {
+        System.out.println(record.value());
+      }
+    }
+  }
+}
+```
+
+### Java Properties 객체를 통한 Consumer 설정 및 생성
+
+```java
+Properties configs = new Properties();
+configs.put("bootstrap.servers", "localhost:9092");
+```
+
+$\rightarrow$ bootstrap servers 옵션을 통해 kafka broker를 설정한다.  
+broker 중 1개에 이슈가 생기면 다른 broker가 붙을 수 있도록 여러개의 broker를 지정하는 것을 추천한다.
+
+```java
+configs.put("group.id", "click_log_group");
+```
+
+$\rightarrow$ group id를 지정한다. consumer group이라고도 불린다.
+
+```java
+configs.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+configs.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+```
+
+$\rightarrow$ key와 value에 대한 직렬화 설정을 추가한다.
+
+```java
+KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(configs);
+```
+
+$\rightarrow$ 설정 완료한 Properties 객체로 KafkaConsumer 인스턴스를 생성한다.
+이 인스턴스를 통해 데이터를 읽고 처리한다.
+
+### 대상 topic 지정
+
+```java
+consumer.subscribe(Arrays.asList("click_log"));
+```
+
+$\rightarrow$ subscribe()를 사용해 어느 topic을 대상으로 데이터를 가져올지 설정한다. 특정 topic의 전체 partition의 데이터를 읽어온다.
+
+```java
+TopicPartition partition0 = new TopicPartition(topicName, 0);
+TopicPartition partition1 = new TopicPartition(topicName, 1);
+
+consumer.assign(Arrays.asList(partition0, partition1));
+```
+
+$\rightarrow$ assign()을 사용해 특정 topic의 일부 partition 데이터를 가져온다. key가 존재하는 데이터라면 데이터의 순서를 보장하는 데이터 처리가 가능하다.
+
+### polling loop
+
+```java
+while(true) {
+  ConsumerRecords<String, String> records = consumer.poll(500);
+  for(ConsumerRecord<String, String> record : records) {
+    System.out.println(record.value());
+  }
+}
+```
+
+$\rightarrow$ poll()이 포함된 무한루프를 사용한다.  
+consumer API의 핵심은 broker로부터 연속적으로 그리고 consumer가 허락하는 한 많은 데이터를 읽는 것이다. 따라서 위 loop가 consumer API의 핵심 로직이다.
+
+consumer는 poll()을 사용해 데이터를 가져온다. 설정한 시간동안 데이터를 기다리게 된다. 위 예에서는 500ms이다.  
+0.5초동안 데이터가 도착하기를 기다리고 이후 코드를 실행한다. 만약 0.5초동안 데이터가 들어오지 않으면 빈 값의 records 변수를 반환하고 데이터가 들어오면 데이터가 존재하는 records 값을 반환한다.
+
+```java
+for(ConsumerRecord<String, String> record : records)
+```
+
+records 변수는 데이터 배치로서 record의 묶음 list이다. 따라서 실제로 kafka에서 데이터를 처리할 때는 가장 작은 단위인 record로 나누어 처리한다.
+
+records 변수를 for loop에서 반복 처리하면서 실질적으로 처리하는 데이터를 가져온다. record.value()의 반환값이 이전에 producer가 전송한 데이터이다.
+
+### Producer에서 Consumer로 Message 전달
+
+key가 null일 경우 2개의 partition에 round-robin으로 데이터를 넣는다.  
+partition으로 들어간 데이터는 partition 내에서 고유한 번호인 offset을 가지게 된다. offset은 topic, partition별로 별개 지정된다.  
+offset은 consumer가 데이터를 어느 지점까지 읽었는지 확인하는 용도로 사용된다.
+
+consumer가 데이터를 읽기 시작하면 offset을 commit하게 되는데 이렇게 가져간 내용의 정보는 kafka의 \_\_consumer_offset topic에 저장한다.
+
+<img width="550" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/e0530eb7-abf5-4d94-83f2-6456217a3619">
+
+partition #0의 데이터를 3번 offset까지 읽고 partition #1의 데이터를 2번 offset까지 읽은 consumer가 실행 중지되었다가 재실행된다면 \_\_consumer_offset을 통해 중지되었던 시점을 알고 있으므로 다시 처리 시점을 복구할 수 있다. (고가용성의 특징을 가진다.)
+
+### Multiple Consumer
+
+partition이 2개라고 가정할 때
+
+- **Consumer가 1개인 경우**
+
+  <img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/0cfa90f9-0496-4f5e-9fcb-a959ce93f434">
+
+  $\rightarrow$ 2개의 partition에서 데이터를 가져간다.
+
+- **Consumer가 2개인 경우**
+
+  <img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8fff8c13-9c81-4e57-a172-e491c4bd1039">
+
+  $\rightarrow$ 각 consumer가 각각의 partition을 할당해 데이터를 처리한다.
+
+- **Consumer가 3개 이상인 경우**
+
+  <img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/0ca09e27-79da-48ce-a5f6-f965eb906487">
+
+  $\rightarrow$ 이미 partition들이 각 consumer에 할당되어 더이상 할당될 partition이 없어 동작하지 않는다.
+
+  여러 partition을 가진 topic에 대해 consumer를 병렬 처리하고 싶다면 consumer는 partition 개수보다 적거나 같아야 한다.
+
+### Different Groups
+
+각기 다른 그룹에 속한 consumer들은 다른 consumer 그룹에 영향을 미치치 않는다.
+
+데이터 실시간 시각화 및 분석을 위한 consumer 그룹과 데이터 백업을 위한 consumer 그룹이 있을 때 각 그룹이 동일한 topic의 데이터를 읽어도 서로 영향을 미치지 않는다.
+
+\_\_consumer_offset topic에는 consumer 그룹별로, topic별로 offset을 나누어 저장하기 때문이다.
+
+따라서 하나의 topic으로 들어온 데이터는 다양한 역할을 하는 consumer들에 의해 각자 원하는 대로 처리될 수 있다.
