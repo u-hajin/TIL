@@ -54,6 +54,7 @@
     - [Producer에서 Consumer로 Message 전달](#producer에서-consumer로-message-전달)
     - [Multiple Consumer](#multiple-consumer)
     - [Different Groups](#different-groups)
+11. [Kafka Streams Application](#kafka-streams-application)
 
 ## 아파치 카프카 개요 및 설명
 
@@ -832,9 +833,11 @@ producer.close();
   $\rightarrow$ topic 내부의 partition에서 메시지를 가져오는 것이다. 메시지를 가져와 특정 데이터베이스에 저장하거나 또 다른 파이프라인에 전달할 수 있다.
 
 - Partition offset 위치 기록(commit)
+
   $\rightarrow$ offset(partition에 있는 데이터의 번호) 위치를 commit 한다.
 
 - Consumer group을 통해 병렬 처리
+
   $\rightarrow$ consumer가 여러개일 때 병렬 처리를 할 수 있다. partition 개수에 따라 consumer를 여러개 만들면 병렬 처리가 가능해져 더 빠른 속도로 데이터를 처리한다.
 
 ### Consumer Application 개발
@@ -935,7 +938,8 @@ while(true) {
 }
 ```
 
-$\rightarrow$ poll()이 포함된 무한루프를 사용한다.  
+$\rightarrow$ poll()이 포함된 무한루프를 사용한다.
+
 consumer API의 핵심은 broker로부터 연속적으로 그리고 consumer가 허락하는 한 많은 데이터를 읽는 것이다. 따라서 위 loop가 consumer API의 핵심 로직이다.
 
 consumer는 poll()을 사용해 데이터를 가져온다. 설정한 시간동안 데이터를 기다리게 된다. 위 예에서는 500ms이다.  
@@ -951,8 +955,10 @@ records 변수를 for loop에서 반복 처리하면서 실질적으로 처리�
 
 ### Producer에서 Consumer로 Message 전달
 
-key가 null일 경우 2개의 partition에 round-robin으로 데이터를 넣는다.  
-partition으로 들어간 데이터는 partition 내에서 고유한 번호인 offset을 가지게 된다. offset은 topic, partition별로 별개 지정된다.  
+key가 null일 경우 2개의 partition에 round-robin으로 데이터를 넣는다.
+
+partition으로 들어간 데이터는 partition 내에서 고유한 번호인 offset을 가지게 된다. offset은 topic, partition별로 별개 지정된다.
+
 offset은 consumer가 데이터를 어느 지점까지 읽었는지 확인하는 용도로 사용된다.
 
 consumer가 데이터를 읽기 시작하면 offset을 commit하게 되는데 이렇게 가져간 내용의 정보는 kafka의 \_\_consumer_offset topic에 저장한다.
@@ -994,3 +1000,5 @@ partition이 2개라고 가정할 때
 \_\_consumer_offset topic에는 consumer 그룹별로, topic별로 offset을 나누어 저장하기 때문이다.
 
 따라서 하나의 topic으로 들어온 데이터는 다양한 역할을 하는 consumer들에 의해 각자 원하는 대로 처리될 수 있다.
+
+## Kafka Streams Application
