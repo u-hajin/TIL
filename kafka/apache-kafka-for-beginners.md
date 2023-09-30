@@ -55,6 +55,8 @@
     - [Multiple Consumer](#multiple-consumer)
     - [Different Groups](#different-groups)
 11. [Kafka Streams Application](#kafka-streams-application)
+    - [Kafka Streams의 장점](#kafka-streams의-장점)
+    - [Streams DSL이 제공하는 이벤트 기반 메서드](#streams-dsl이-제공하는-이벤트-기반-메서드)
 
 ## 아파치 카프카 개요 및 설명
 
@@ -1002,3 +1004,63 @@ partition이 2개라고 가정할 때
 따라서 하나의 topic으로 들어온 데이터는 다양한 역할을 하는 consumer들에 의해 각자 원하는 대로 처리될 수 있다.
 
 ## Kafka Streams Application
+
+consumer를 사용해서 데이터를 처리하는 것보다 더 안전하고 빠르면서도 다양한 기능을 사용할 수 있는 Kafka Streams이다.
+
+kafka에서 공식적으로 제공하는 자바 라이브러리이다. topic에 있는 데이터를 낮은 지연과 함께 빠른 속도로 처리할 수 있다.
+
+streams는 라이브러리로 제공되기 때문에 Java, Scala, Kotlin 등 JVM 기반 언어로 개발할 수 있다.
+
+### Kafka Streams의 장점
+
+- **카프카와 완벽 호환된다.**
+
+  $\rightarrow$ streams는 매번 kafka가 릴리즈될 때마다 kafka cluster와 완벽하게 호환되어 최신의 기능을 가지고 있다.
+
+  kafka에 보안 기능이나 ACL 같은 것들이 붙어있어도 완벽하게 호환된다.
+
+  또한 유실이나 중복 처리되지 않고 딱 한번만 처리할 수 있는 강력한 기능을 가지고 있다. kafka와 연동하는 이벤트 프로세싱 도구 중 거의 유일하다고 볼 수 있다.
+
+- **스케쥴링 도구가 필요없다.**
+
+  $\rightarrow$ kafka와 연동하는 스트림 프로세싱 툴로 가장 많이, 널리 사용하는 것이 Spark Streaming이다. Spark Streaming 또는 spark structured streaming을 사용하면 kafka와 연동하여 마이크로 배치 처리를 하는 이벤트 데이터 애플리케이션을 만들 수 있다.
+
+  문제는 스파크를 운영하기 위해서 yarn이나 mesos와 같이 cluster 관리자 또는 리소스 매니저 같은 것들이 필요하며 cluster 운영을 위해 대규모 장비들을 구축해야 한다.  
+  반면에 streams를 사용하면 스케쥴링 도구는 전혀 필요없다.
+
+  streams 애플리케이션은 consumer 애플리케이션이나 WAS 애플리케이션을 배포하는 것처럼 원하는 만큼 배포하면 된다.
+
+- **Streams DSL과 Processor API를 제공**
+
+  $\rightarrow$ streams를 구현하는 방법은 2가지이다. 대부분의 경우에는 Streams DSL을 사용해서 해결할 수 있다.  
+  Streams DSL은 이벤트 기반 데이터 처리를 할 때 필요한 기능인 map, join, window 등과 같은 메서드들을 제공하기 때문에 사용하기 편하다.
+
+  Streams DSL에 없는 기능이 있다면 Processor API를 사용해 로직을 작성하면 된다.
+
+  Streams DSL만이 제공하는 KStream, KTable, GlobalKTable은 독특한 스트림 처리 개념이다.  
+  스트림 데이터 처리뿐만 아니라 대규모 key-value 저장소로도 사용할 수 있는 기능 또한 가지고 있다.
+
+- **로컬 상태 저장소를 사용한다.**
+
+  $\rightarrow$ 실시간으로 들어오는 데이터를 처리하는 방식은 크게 비상태 기반 처리, 상태 기반 처리 2가지이다.
+
+  Stateless라고도 불리는 비상태 기반 처리는 필터링이나 데이터를 변환하는 처리이다.  
+  데이터가 들어오는 족족 바로 처리하고 프로듀스하면 되기 때문에 유실이나 중복이 발생할 염려가 적고 쉽게 개발할 수 있다.
+
+  Stateful이라고도 불리는 상태 기반 처리 직접 구현은 어렵다. window, join, aggregation과 같은 처리는 이전에 받았던 데이터를 프로세스가 메모리에 저장하고 있으면서 다음 데이터를 참조해서 처리해야 하기 때문이다. 이러한 어려움을 극복하게 도와주는 것이 바로 streams이다.
+
+  streams는 이런 어려운 처리를 돕기 위해 로컬에 RocksDB를 사용해 상태를 저장하고 이 상태에 대한 변환 정보는 kafka의 변경 로그(changelog) topic에 저장한다.  
+  streams를 사용하면 프로세스에 장애가 발생하더라도 그 상태가 모두 안전하게 저장되기 때문에 자연스럽게 장애 복구가 가능하다.
+
+### Streams DSL이 제공하는 이벤트 기반 메서드
+
+```java
+KStream<String, String> paymentStream = builder.stream("payment");
+KStream<String, String> filteredStream = paymentStream
+                            .filter((key, value) -> key.equals("unknown"));
+filteredStream.to("unknown-payment");
+```
+
+위 코드는 payment topic에 message key가 "unknown"인 데이터를 필터링해서 unknown-payment topic으로 보내는 streams 코드이다.
+
+기존처럼 consumer로 polling하거나 producer를 어렵게 구현할 필요가 없다. 위처럼 Streams DSL이 제공하는 이벤트 기반 메서드를 사용하면 쉽게 구현할 수 있다.
