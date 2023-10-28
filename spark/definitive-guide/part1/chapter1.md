@@ -151,6 +151,18 @@ UC버클리 대학교의 하둡 사용자들과 플랫폼의 요건을 연구한
 
 <img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/cae00d30-3a81-437f-a6e2-c0db5ee59ff3">
 
+### 스칼라 콘솔 실행하기
+
+스칼라 콘솔 실행을 위해 아래 명령어를 실행한다.
+
+```bash
+./bin/spark-shell
+```
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/e682c539-11d4-40fe-95db-7f7bee937044">
+
+콘솔 실행 후 spark를 입력하면 SparkSession 객체가 출력된다.
+
 ### SQL 콘솔 실행하기
 
 스파크 SQL을 사용할 수 있는 SQL 콘솔은 아래 명령어로 실행한다.

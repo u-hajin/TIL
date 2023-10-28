@@ -112,7 +112,7 @@ $\rightarrow$ 스파크 애플리케이션의 아키텍처
 
 ### SparkSession과 스파크 언어 API 간의 관계
 
-<img width="450" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/7d903c44-b864-4aaa-9772-4779742ae0e7">
+<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/7d903c44-b864-4aaa-9772-4779742ae0e7">
 
 $\rightarrow$ SparkSession과 스파크 언어 API 간의 관계
 
