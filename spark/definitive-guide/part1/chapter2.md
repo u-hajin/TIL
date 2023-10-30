@@ -9,6 +9,8 @@
   - [SparkSession과 스파크 언어 API 간의 관계](#sparksession과-스파크-언어-api-간의-관계)
 - 2.3 [스파크 API](#23-스파크-api)
 - 2.4 [스파크 시작하기](#24-스파크-시작하기)
+- 2.5 [SparkSession](#25-sparksession)
+  - [일정 범위 숫자 생성(예제)](#일정-범위-숫자-생성)
 
 ## 2.1 스파크의 기본 아키텍처
 
@@ -135,3 +137,41 @@ $\rightarrow$ SparkSession과 스파크 언어 API 간의 관계
 하지만 스탠드얼론 애플리케이션으로 스파크를 시작하려면 사용자 애플리케이션 콛에서 SparkSession 객체를 직접 생성해야 한다.
 
 예제 실행을 위해 [스칼라 콘솔 실행](https://github.com/usuyn/TIL/blob/master/spark/definitive-guide/part1/chapter1.md#스칼라-콘솔-실행하기)을 참고해 대화형 세션을 시작한다.
+
+## 2.5 SparkSession
+
+- 스파크 애플리케이션은 SparkSession이라 불리는 드라이버 프로세스로 제어
+
+- SparkSession 인스턴스는 사용자가 정의한 처리 명령을 클러스터에서 실행
+
+- 하나의 SparkSession은 하나의 스파크 애플리케이션에 대응
+
+스칼라와 파이썬 콘솔을 실행하면 spark 변수로 SparkSession을 사용할 수 있다.
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/3f3d521e-9a0e-4d07-bfa4-e736a77fb339">
+
+$\rightarrow$ 스칼라에서 SparkSession 확인
+
+### 일정 범위 숫자 생성
+
+일정 범위의 숫자를 만드는 간단한 작업을 수행한다. 이 숫자들은 스프레드시트에서 컬럼명을 지정한 것과 같다.
+
+```scala
+val myRange = spark.range(1000).toDF("number")
+```
+
+$\rightarrow$ 스칼라 코드
+
+```python
+myRange = spark.range(1000).toDF("number")
+```
+
+$\rightarrow$ 파이썬 코드
+
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/693e7a34-875d-4223-8466-c760d23e6acd">
+
+생성한 DataFrame은 한 개의 컬럼(number)과 1,000개의 로우로 구성되며 각 로우에 0부터 999까지의 값이 할당되어 있다.
+
+이 숫자들은 **분산 컬렉션**을 나타낸다.
+
+클러스터 모드에서 코드 예제를 실행하면 숫자 범위의 각 부분이 서로 다른 익스큐터에 할당된다.
