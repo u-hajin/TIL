@@ -14,6 +14,8 @@
 - 2.6 [DataFrame](#26-dataframe)
   - 2.6.1 [파티션](#261-파티션)
 - 2.7 [트랜스포메이션(예제)](#27-트랜스포메이션)
+  - [Narrow Dependency](#narrow-dependency)
+  - [Wide Dependency](#wide-dependency)
 
 ## 2.1 스파크의 기본 아키텍처
 
@@ -248,3 +250,33 @@ $\rightarrow$ 파이썬 코드
 - Narrow Dependency, 좁은 의존성
 
 - Wide Dependency, 넓은 의존성
+
+### Narrow Dependency
+
+- 좁은 의존성을 가진 트랜스포메이션 $\rightarrow$ 좁은 트랜스포메이션
+
+- 각 입력 파티션이 하나의 출력 파티션에만 영향을 미침
+
+- 좁은 트랜스포메이션 사용 시 스파크가 파이프라이닝(pipelining) 자동 수행
+
+- DataFrame에 여러 필터 지정하는 경우 모든 작업이 메모리에서 발생
+
+- 예제 코드에서 where 구문은 좁은 의존성을 가짐
+
+  <img width="300" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/ef2dcab7-02ac-44db-96bf-f1a04d5b7585">
+
+  $\rightarrow$ 좁은 의존성, 하나의 파티션이 하나의 출력 파티션에만 영향
+
+### Wide Dependency
+
+- 넓은 의존성을 가진 트랜스포메이션 $\rightarrow$ 넓은 트랜스포메이션
+
+- 하나의 입력 파티션이 여러 출력 파티션에 영향을 미친다.
+
+- 클러스터에서 파티션을 교환 $\rightarrow$ 셔플(shuffle)
+
+- 스파크는 셔플의 결과를 디스크에 저장
+
+  <img width="300" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/929f9e54-e7ca-426c-aa86-84c32eaa23de">
+
+  $\rightarrow$ 넓은 의존성, 하나의 파티션이 여러 출력 파티션에 영향
