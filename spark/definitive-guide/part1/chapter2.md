@@ -17,6 +17,9 @@
   - [Narrow Dependency](#narrow-dependency)
   - [Wide Dependency](#wide-dependency)
   - 2.7.1 [지연 연산](#271-지연-연산)
+- 2.8 [액션(예제)](#28-액션)
+- 2.9 [스파크 UI](#29-스파크-ui)
+  - [접속 방법](#접속-방법)
 
 ## 2.1 스파크의 기본 아키텍처
 
@@ -192,7 +195,7 @@ $\rightarrow$ 파이썬 코드
 
 컬럼에 이름을 붙인 스프레드시트와 비슷하나 아래와 같은 차이점이 존재한다.
 
-<img width="400" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/ee17fb23-081f-41b0-aa7e-61502b9676ac">
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/ee17fb23-081f-41b0-aa7e-61502b9676ac">
 
 $\rightarrow$ 분산 컴퓨터와 단일 컴퓨터 분석의 차이점
 
@@ -264,7 +267,7 @@ $\rightarrow$ 파이썬 코드
 
 - 예제 코드에서 where 구문은 좁은 의존성을 가짐
 
-  <img width="300" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/ef2dcab7-02ac-44db-96bf-f1a04d5b7585">
+  <img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/ef2dcab7-02ac-44db-96bf-f1a04d5b7585">
 
   $\rightarrow$ 좁은 의존성, 하나의 파티션이 하나의 출력 파티션에만 영향
 
@@ -278,7 +281,7 @@ $\rightarrow$ 파이썬 코드
 
 - 스파크는 셔플의 결과를 디스크에 저장
 
-  <img width="300" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/929f9e54-e7ca-426c-aa86-84c32eaa23de">
+  <img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/929f9e54-e7ca-426c-aa86-84c32eaa23de">
 
   $\rightarrow$ 넓은 의존성, 하나의 파티션이 여러 출력 파티션에 영향
 
@@ -299,3 +302,64 @@ $\rightarrow$ 파이썬 코드
 스파크는 이 필터를 데이터 소스로 위임하는 최적화 작업을 자동으로 수행  
 $\rightarrow$ 데이터 저장소가 데이터베이스라면 WHERE 절의 처리를 데이터베이스에 위임, 스파크는 하나의 레코드만 받는다.  
 $\rightarrow$ 처리에 필요한 자원 최소화
+
+## 2.8 액션
+
+사용자는 트랜스포메이션을 사용해 논리적 실행 계획을 세운다.
+
+하지만 실제 연산을 수행하려면 **액션** 명령을 내려야 한다.  
+$\rightarrow$ 일련의 트랜스포메이션으로부터 결과를 계산하도록 지시하는 명령
+
+가장 단순한 액션인 count 메서드는 DataFrame의 전체 레코드 수를 반환한다.
+
+```scala
+divisBy2.count()
+```
+
+<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/648080a0-e22e-4218-9724-3aba5f04d2ed">
+
+count 외에도 세 가지 유형의 액션이 존재한다.
+
+- 콘솔에서 데이터를 보는 액션
+
+- 각 언어로 된 네이티브 객체에 데이터를 모으는 액션
+
+- 출력 데이터 소스에 저장하는 액션
+
+액션을 지정하면 스파크 잡(job)이 시작된다.
+
+스파크 잡은 필터(좁은 트랜스포메이션)를 수행한 후 파티션별로 레코드 수를 카운트(넓은 트랜스포메이션) 한다. 그리고 각 언어에 적합한 네이티브 객체에 결과를 모은다.
+
+이때 스파크가 제공하는 스파크 UI로 클러스터에서 실행 중인 스파크 잡을 모니터링할 수 있다.
+
+필터(좁은 트랜스포메이션) 수행 $\rightarrow$ 파티션별로 레코드 수 카운트(넓은 트랜스포메이션) $\rightarrow$ 네이티브 객체에 결과 수집
+
+## 2.9 스파크 UI
+
+스파크 잡의 진행 상황을 모니터링할 때 사용한다. 드라이버 노드의 4040 포트로 접속할 수 있으며, 로컬 모드에서 스파크를 실행 시 주소는 http://localhost:4040 이다.
+
+스파크 잡의 상태, 환경 설정, 클러스터 상태 등의 정보를 확인할 수 있다. 스파크 UI를 사용해 잡을 튜닝하고 디버깅한다.
+
+현재까지는
+
+- 스파크 잡은 개별 액션에 의해 트리거되는 다수의 트랜스포메이션으로 구성
+
+- 스파크 UI로 잡 모니터링 가능
+
+만 기억하면 된다.
+
+### 접속 방법
+
+아래 명령어를 통해 스칼라 콘솔을 실행한다.
+
+```scala
+./bin/spark-shell
+```
+
+4040 포트에서 바인드가 불가하면 1씩 증가시키며 가능한 포트 번호를 찾는 것을 확인할 수 있다.
+
+<img width="600" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/49fa9ce1-84f4-4f5d-aa41-b1316ea85ab3">
+
+명시된 주소로 스파크 UI에 접속할 수 있다.
+
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/dc5fc6de-098c-4929-89fd-b8f31a249783">
