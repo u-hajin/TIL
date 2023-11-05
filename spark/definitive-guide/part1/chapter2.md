@@ -20,6 +20,11 @@
 - 2.8 [액션(예제)](#28-액션)
 - 2.9 [스파크 UI](#29-스파크-ui)
   - [접속 방법](#접속-방법)
+- 2.10 [종합 예제](#210-종합-예제)
+  - [데이터 읽기](#데이터-읽기)
+  - [데이터 정렬](#데이터-정렬)
+  - [실행 계획 확인](#실행-계획-확인)
+  - [액션 호출](#액션-호출)
 
 ## 2.1 스파크의 기본 아키텍처
 
@@ -363,3 +368,104 @@ count 외에도 세 가지 유형의 액션이 존재한다.
 명시된 주소로 스파크 UI에 접속할 수 있다.
 
 <img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/dc5fc6de-098c-4929-89fd-b8f31a249783">
+
+## 2.10 종합 예제
+
+현실적인 예제로 지금까지 배운 내용을 확실히 이해하고, 스파크 내부에서 어떤 일이 일어나는지 단계별로 살펴본다.
+
+미국 교통 통계국의 [항공 운항 데이터](https://bit.ly/2yw2fCx) 중 일부를 스파크로 분석한다.
+
+예제에서는 CSV 파일만 사용한다.
+
+각 파일은 여러 로우를 가진다. 반정형(semi-structured) 데이터 포맷으로 파일의 각 로우는 DataFrame의 로우가 된다.
+
+<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/808511cb-3eef-4e6a-afdf-1be68dad2462">
+
+### 데이터 읽기
+
+스파크는 다양한 데이터 소스를 지원한다. 데이터는 SparkSession의 DataFrameReader 클래스를 사용해 읽는다. 이때 특정 파일 포맷과 몇 가지 옵션을 함께 설정한다.
+
+예제에서는 스파크 DataFrame의 스키마 정보를 알아내는 **스키마 추론(schema inference)** 기능을 사용하며, 파일의 첫 로우를 헤더로 지정하는 옵션을 설정한다.
+
+스파크는 스키마 정보를 얻기 위해 데이터를 조금 읽고 해당 로우의 데이터 타입을 스파크 데이터 타입에 맞게 분석한다.  
+하지만 운영 환경에서는 데이터를 읽는 시점에 스키마를 엄격하게 지정하는 옵션을 사용해야 한다.
+
+```scala
+val flightData2015 = spark
+  .read
+  .option("inferSchema", "true")
+  .option("header", "true")
+  .csv("./data/flight-data/csv/2015-summary.csv")
+```
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/d7c2c765-415a-4cde-8314-71f8789e0a06">
+
+스칼라와 파이썬에서 사용하는 DataFrame은 불특정 다수의 로우와 컬럼을 가진다. 로우의 수를 알 수 없는 이유는 테이터를 읽는 과정이 지연 연산 형태의 트랜스포메이션이기 때문이다.
+
+스파크는 각 컬럼의 데이터 타입을 추론하기 위해 적은 양의 데이터를 읽는다.
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/377c07f3-89bd-4ab7-8f09-a625cf04ea70">
+
+$\rightarrow$ DataFrame에서 CSV 파일을 읽어 로컬 배열이나 리스트 형태로 변환하는 과정
+
+DataFrame의 **take 액션**을 호출하면 이전의 head 명령과 같은 결과를 확인할 수 있다.
+
+```scala
+flightData2015.take(3)
+```
+
+<img width="800" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/e95d6922-d11b-44d9-a42f-e600cfa0e4b3">
+
+### 데이터 정렬
+
+트랜스포메이션을 추가로 지정한다. 정수 데이터 타입인 count 컬럼을 기준으로 데이터를 정렬한다.
+
+정렬을 위해 사용하는 sort 메서드는 DataFrame을 변경하지 않는다. 트랜스포메이션으로 sort 메서드를 사용하면 이전의 DataFrame을 변환해 새로운 DataFrame을 생성해 반환한다.
+
+<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/51b26b87-4220-4e74-980e-2c93c4245df6">
+
+$\rightarrow$ DataFrame을 이용한 데이터 읽기, 정렬, 수집
+
+sort 메서드는 단지 트랜스포메이션이기 때문에 호출 시 데이터에 아무런 변화도 일어나지 않는다. 스파크는 실행 계획을 만들고 검토하여 클러스터에서 처리할 방법을 알아낸다.
+
+### 실행 계획 확인
+
+특정 DataFrame 객체에 explain 메서드를 호출하면 DataFrame의 계보(lineage)나 스파크의 쿼리 실행 계획을 확인할 수 있다.
+
+```scala
+flightData2015.sort("count").explain()
+```
+
+<img width="800" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/10c136c3-02c2-4309-b30d-4222d4207315">
+
+실행 계획은 위에서 아래 방향으로 읽으며 최종 결과는 가장 위에, 데이터 소스는 가장 아래에 있다.
+
+위 이미지에서는 각 줄의 첫번째 키워드인 Sort, Exchange, FileScan에 주목해야 한다.
+
+특정 컬럼을 다른 컬럼과 비교하는 sort 메서드가 넓은 트랜스포메이션으로 동작하는 것을 볼 수 있다.
+
+### 액션 호출
+
+트랜스포메이션 실행 계획을 시작하기 위해 액션을 호출한다. 액션을 실행하려면 몇 가지 설정이 필요하다.
+
+스파크는 셔플 수행 시 기본적으로 200개의 셔플 파티션을 생성한다. 이 값을 5로 설정해 셔플의 출력 파티션 수를 줄인다.
+
+```scala
+spark.conf.set("spark.sql.shuffle.partitions", 5)
+
+flightData2015.sort("count").take(2)
+```
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/ddc23acb-d577-4354-86e0-8f24f7525a42">
+
+<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/4b0eb35c-778a-422b-8b36-d6532b8a236f">
+
+$\rightarrow$ 논리적, 물리적 DataFrame 처리 과정(위 예제의 처리 과정)
+
+트랜스포메이션의 논리적 실행 계획은 DataFrame의 계보를 정의한다. 스파크는 계보를 통해 입력 데이터에 수행한 연산을 전체 파티션에서 어떻게 재연산하는지 알 수 있다.
+
+이 기능은 **스파크의 프로그래밍 모델인 함수형 프로그래밍의 핵심**이다. 함수형 프로그래밍은 데이터의 변환 규칙이 일정한 경우 같은 입력에 대해 항상 같은 출력을 생성한다.
+
+사용자는 물리적 데이터를 직접 다루지 않지만, 앞서 설정한 셔플 파티션 파라미터와 같은 속성으로 물리적 실행 특성을 제어한다.
+
+예제에서 5로 설정했던 셔플 파티션 수를 변경하면 스파크 잡의 실행 특성을 제어할 수 있다.
