@@ -1,10 +1,10 @@
 ## 목차
 
 - 2.1 [스파크의 기본 아키텍처](#21-스파크의-기본-아키텍처)
-  - 2.1.1 [스파크 애플리케이션](#211-스파크-애플리케이션)
-    - [Driver](#driver)
-    - [Executor](#executor)
-    - [스파크 애플리케이션 이해를 위한 핵심사항](#스파크-애플리케이션-이해를-위한-핵심사항)
+- 2.1.1 [스파크 애플리케이션](#211-스파크-애플리케이션)
+  - [Driver](#driver)
+  - [Executor](#executor)
+  - [스파크 애플리케이션 이해를 위한 핵심사항](#스파크-애플리케이션-이해를-위한-핵심사항)
 - 2.2 [스파크의 다양한 언어 API](#22-스파크의-다양한-언어-api)
   - [SparkSession과 스파크 언어 API 간의 관계](#sparksession과-스파크-언어-api-간의-관계)
 - 2.3 [스파크 API](#23-스파크-api)
@@ -12,11 +12,11 @@
 - 2.5 [SparkSession](#25-sparksession)
   - [일정 범위 숫자 생성(예제)](#일정-범위-숫자-생성)
 - 2.6 [DataFrame](#26-dataframe)
-  - 2.6.1 [파티션](#261-파티션)
+- 2.6.1 [파티션](#261-파티션)
 - 2.7 [트랜스포메이션(예제)](#27-트랜스포메이션)
   - [Narrow Dependency](#narrow-dependency)
   - [Wide Dependency](#wide-dependency)
-  - 2.7.1 [지연 연산](#271-지연-연산)
+- 2.7.1 [지연 연산](#271-지연-연산)
 - 2.8 [액션(예제)](#28-액션)
 - 2.9 [스파크 UI](#29-스파크-ui)
   - [접속 방법](#접속-방법)
@@ -25,6 +25,12 @@
   - [데이터 정렬](#데이터-정렬)
   - [실행 계획 확인](#실행-계획-확인)
   - [액션 호출](#액션-호출)
+- 2.10.1 [DataFrame과 SQL](#2101-dataframe과-sql)
+  - [테이블, 뷰 생성](#테이블-뷰-생성)
+  - [SQL 쿼리 실행](#sql-쿼리-실행)
+  - [다양한 데이터 처리 기능](#다양한-데이터-처리-기능)
+  - [특정 위치를 왕래하는 최대 비행 횟수](#특정-위치를-왕래하는-최대-비행-횟수)
+  - [상위 5개의 도착 국가](#상위-5개의-도착-국가)
 
 ## 2.1 스파크의 기본 아키텍처
 
@@ -414,7 +420,7 @@ DataFrame의 **take 액션**을 호출하면 이전의 head 명령과 같은 결
 flightData2015.take(3)
 ```
 
-<img width="800" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/e95d6922-d11b-44d9-a42f-e600cfa0e4b3">
+<img width="800" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/e95d6922-d11b-44d9-a42f-e600cfa0e4b3">
 
 ### 데이터 정렬
 
@@ -422,7 +428,7 @@ flightData2015.take(3)
 
 정렬을 위해 사용하는 sort 메서드는 DataFrame을 변경하지 않는다. 트랜스포메이션으로 sort 메서드를 사용하면 이전의 DataFrame을 변환해 새로운 DataFrame을 생성해 반환한다.
 
-<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/51b26b87-4220-4e74-980e-2c93c4245df6">
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/51b26b87-4220-4e74-980e-2c93c4245df6">
 
 $\rightarrow$ DataFrame을 이용한 데이터 읽기, 정렬, 수집
 
@@ -436,7 +442,7 @@ sort 메서드는 단지 트랜스포메이션이기 때문에 호출 시 데이
 flightData2015.sort("count").explain()
 ```
 
-<img width="800" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/10c136c3-02c2-4309-b30d-4222d4207315">
+<img width="800" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/10c136c3-02c2-4309-b30d-4222d4207315">
 
 실행 계획은 위에서 아래 방향으로 읽으며 최종 결과는 가장 위에, 데이터 소스는 가장 아래에 있다.
 
@@ -458,7 +464,7 @@ flightData2015.sort("count").take(2)
 
 <img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/ddc23acb-d577-4354-86e0-8f24f7525a42">
 
-<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/4b0eb35c-778a-422b-8b36-d6532b8a236f">
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/4b0eb35c-778a-422b-8b36-d6532b8a236f">
 
 $\rightarrow$ 논리적, 물리적 DataFrame 처리 과정(위 예제의 처리 과정)
 
@@ -469,3 +475,204 @@ $\rightarrow$ 논리적, 물리적 DataFrame 처리 과정(위 예제의 처리 
 사용자는 물리적 데이터를 직접 다루지 않지만, 앞서 설정한 셔플 파티션 파라미터와 같은 속성으로 물리적 실행 특성을 제어한다.
 
 예제에서 5로 설정했던 셔플 파티션 수를 변경하면 스파크 잡의 실행 특성을 제어할 수 있다.
+
+## 2.10.1 DataFrame과 SQL
+
+DataFrame과 SQL을 사용하는 복잡한 작업을 수행한다.
+
+스파크는 언어에 상관없이 같은 방식으로 트랜스포메이션을 실행할 수 있다.
+
+- 사용자가 SQL이나 DataFrame(R, 파이썬, 스칼라, 자바에서)으로 비즈니스 로직을 표현
+
+  $\rightarrow$ 스파크에서 실제 코드를 실행하기 전에 그 로직을 기본 실행 계획으로 컴파일
+
+- 스파크 SQL을 사용해 DataFrame을 테이블이나 뷰(임시 테이블)로 등록
+
+  $\rightarrow$ SQL 쿼리 사용 가능
+
+- 스파크는 SQL 쿼리를 DataFrame 코드와 같은 실행 계획으로 컴파일
+
+  $\rightarrow$ 둘 사이의 성능 차이 없음
+
+### 테이블, 뷰 생성
+
+**createOrReplaceTempView** 메서드를 호출하면 모든 DataFrame을 테이블이나 뷰로 만들 수 있다.
+
+```scala
+flightData2015.createOrReplaceTempView("flight_data_2015")
+```
+
+메서드 호출 후 SQL로 데이터를 조회할 수 있다.
+
+### SQL 쿼리 실행
+
+새로운 DataFrame을 반환하는 **spark.sql** 메서드로 SQL 쿼리를 실행한다.
+
+spark는 SparkSession의 변수이다. DataFrame에 쿼리를 수행하면 새로운 DataFrame을 반환한다.
+
+```scala
+val sqlWay = spark.sql("""
+SELECT DEST_COUNTRY_NAME, count(1)
+FROM flight_data_2015
+GROUP BY DEST_COUNTRY_NAME
+""")
+
+val dataFrameWay = flightData2015
+.groupBy('DEST_COUNTRY_NAME)
+.count()
+
+sqlWay.explain
+dataFrameWay.explain
+```
+
+<img width="600" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/eff5b122-4cf4-4933-b1ac-4106a3bc0a76">
+
+sqlWay, dataFrameWay 모두 동일한 기본 실행 계획으로 컴파일된다.
+
+### 다양한 데이터 처리 기능
+
+데이터에서 흥미로운 통계를 찾는다. 스파크의 DataFrame과 SQL은 다양한 데이터 처리 기능을 제공한다.  
+스파크는 빅데이터 문제를 빠르게 해결하는 데 필요한 수백 개의 함수를 제공한다.
+
+### 특정 위치를 왕래하는 최대 비행 횟수
+
+특정 위치를 왕래하는 최대 비행 횟수를 구하기 위해 max 함수를 사용한다.  
+max 함수는 DataFrame의 특정 컬럼값을 스캔하면서 이전 최댓값보다 더 큰 값을 찾는다. max 함수는 필터링을 수행해 단일 로우를 결과로 반환하는 트랜스포메이션이다.
+
+```scala
+spark.sql("SELECT max(count) from flight_data_2015").take(1)
+
+import org.apache.spark.sql.functions.max
+
+flightData2015.select(max("count")).take(1)
+```
+
+<img width="350" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/a8aaf8dc-330d-483b-ac1b-b5b8ac47577e">
+
+### 상위 5개의 도착 국가
+
+상위 5개의 도착 국가를 찾아내는 코드를 실행한다.
+
+다중 트랜스포메이션 쿼리이 깨문에 단계별로 알아본다. SQL 집계 쿼리부터 시작한다.
+
+```scala
+val maxSql = spark.sql("""
+SELECT DEST_COUNTRY_NAME, sum(count) as destination_total
+FROM flight_data_2015
+GROUP BY DEST_COUNTRY_NAME
+ORDER BY sum(count) DESC
+LIMIT 5
+""")
+
+maxSql.show()
+```
+
+<img width="350" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/6bec2a96-7974-4f24-af03-7e79a436be70">
+
+위 코드와 의미는 같고 구현과 정렬 방식이 다른 DataFrame 구문을 살펴본다. 기본 실행 계획은 두 방법 모두 동일하다.
+
+```scala
+import org.apache.spark.sql.functions.desc
+
+flightData2015
+  .groupBy("DEST_COUNTRY_NAME")
+  .sum("count")
+  .withColumnRenamed("sum(count)", "destination_total")
+  .sort(desc("destination_total"))
+  .limit(5)
+  .show()
+```
+
+<img width="350" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/2c6f679f-85e6-4ef9-9c93-870bf5398a2d">
+
+DataFrame의 explain 메서드로 확인해보면 총 7가지 단계가 존재한다. explain 메서드가 출력하는 실제 실행 계획은 물리적인 실행 시점에서 수행하는 최적화로 인해 아래 그림과 다를 수 있다.
+
+실행 계획은 트랜스포메이션의 **지향성 비순환 그래프**(**directed acyclic graph, DAG**)이며 액션이 호출되면 결과를 만들어낸다. 지향성 비순환 그래프의 각 단계는 불변성을 가진 신규 DataFrame을 생성한다.
+
+<img width="450" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/a78d90cc-ecaa-4f2a-a39b-3eec230e66bc">
+
+$\rightarrow$ DataFrame의 변환 흐름
+
+### 1단계
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/03479369-4a64-444c-b9df-64c09ec81388">
+
+데이터를 읽는다. 데이터를 읽는 DataFrame은 이전 예제에서 정의했다.
+
+기억해야 할 것은 스파크는 해당 DataFrame이나 자신의 원본 DataFrame에 액션이 호출되기 전까지 데이터를 읽지 않는다.
+
+### 2단계
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/9ee88d9e-2fc4-47fd-9dc3-0451139e6218">
+
+데이터를 그룹화한다.
+
+groupBy 메서드가 호출되면 최종적으로 그룹화된 DataFrame을 지칭하는 이름을 가진 **RelationalGroupedDataset**을 반환한다.  
+기본적으로 키 혹은 키셋을 기준으로 그룹을 만들고 각 키에 대한 집계를 수행한다.
+
+### 3단계
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/16a666a6-d443-4d8c-bb5b-494a55001354">
+
+집계 유형을 지정하기 위해 컬럼 표현식이나 컬럼명을 인수로 사용하는 **sum** 메서드를 사용한다.
+
+**sum** 메서드는 새로운 스키마 정보를 가지는 별도의 DataFrame을 생성한다. 신규 스키마에는 새로 만들어진 각 컬럼의 데이터 타입 정보가 들어있다.
+
+sum 메서드 역시 트랜스포메이션으로 **아무런 연산도 발생하지 않는다.** 스파크는 새롭게 생성된 결과 스키마를 통해 타입 정보를 추적한다.
+
+### 4단계
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/342c1273-8335-4868-9016-3d7b7e96bc16">
+
+컬럼명을 변경한다. 이름을 변경하기 위해 **withColumnRenamed** 메서드에 원본 컬럼명과 신규 컬럼명을 인수로 지정한다.
+
+withColumnRenamed 메서드 역시 트랜스포메이션이며, 이 단계에서도 여전히 연산은 발생하지 않는다.
+
+### 5단계
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/31af7db2-9c44-46b9-beb3-48925da30d4e">
+
+데이터를 정렬한다.
+
+결과 DataFrame의 첫 번째 로우를 확인해보면 destination_total 컬럼에서 가장 큰 값을 가지고 있다.
+
+역순으로 정렬하기 위해 desc 함수를 import 한다. desc 함수는 문자열이 아닌 Column 객체를 반환한다.
+
+DataFrame 메서드 중 대부분은 문자열 형태의 컬럼명, Column 타입 그리고 표현식을 파라미터로 사용한다. Column과 표현식은 사실상 같은 것이다.
+
+### 6단계
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/594c4252-1eba-4beb-906d-ed24f9534314">
+
+**limit** 메서드로 반환 결과의 수를 제한한다. 결과 DataFrame의 전체 데이터 대신 상위 5개 로우를 반환한다.
+
+### 7단계
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/57d137b5-4dc4-4ef0-b064-f6fafd06e05b">
+
+액션을 수행한다.
+
+이 단계에 와서야 DataFrame의 결과를 모으는 프로세스를 시작한다. 처리가 끝나면 코드를 작성한 프로그래밍 언어에 맞는 리스트나 배열을 반환한다.
+
+explain 메서드 호출을 통해 실행 계획을 살펴본다.
+
+```scala
+flightData2015
+  .groupBy("DEST_COUNTRY_NAME")
+  .sum("count")
+  .withColumnRenamed("sum(count)", "destination_total")
+  .sort(desc("destination_total"))
+  .limit(5)
+  .explain()
+```
+
+<img width="850" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/7be24a82-c31f-4ca8-a5a9-489264c6fc25">
+
+$\rightarrow$ 실행 계획
+
+'개념적 계획'과 정확하게 동일하지 않지만 모든 부분을 포함하고 있다.  
+limit 구문과 orderBy 구문을 볼 수 있고, partial_sum 함수를 호출하는 부분에서 집계가 두 단계로 나누어지는 것을 알 수 있다.
+
+단계가 나누어지는 이유는 숫자 목록의 합을 구하는 연산이 **가환성**(**commutative, 교환 법칙 성립**)을 가지고 있어 합계 연산 시 파티션별 처리가 가능하기 때문이다.
+
+데이터를 드라이버로 모으는 대신 스파크가 지원하는 여러 데이터 소스로 내보낼 수도 있다. 예를 들어 PostgreSQL과 같은 데이터베이스나 다양한 포맷의 파일에 결과를 저장할 수 있다.
