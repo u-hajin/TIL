@@ -5,3 +5,5 @@
 ### [Chapter 1 : 아파치 스파크란](https://github.com/usuyn/TIL/blob/master/spark/definitive-guide/part1/chapter1.md)
 
 ### [Chapter 2 : 스파크 간단히 살펴보기](https://github.com/usuyn/TIL/blob/master/spark/definitive-guide/part1/chapter2.md)
+
+### [Chapter 3 : 스파크 기능 둘러보기](https://github.com/usuyn/TIL/blob/master/spark/definitive-guide/part1/chapter3.md)
