@@ -5,6 +5,13 @@
   - [pi 계산](#pi-계산)
 - 3.2 [Dataset : 타입 안정성을 제공하는 구조적 API(예제)](#32-dataset--타입-안정성을-제공하는-구조적-api)
   - [장점](#장점)
+- 3.3 [구조적 스트리밍](#33-구조적-스트리밍)
+  - [소매 데이터셋(예제)](#소매retail-데이터셋)
+    - [DataFrame, Schema 생성](#dataframe-schema-생성)
+    - [데이터 그룹화 및 집계](#데이터-그룹화-및-집계)
+    - [스트리밍 코드](#스트리밍-코드)
+    - [비즈니스 로직 적용](#비즈니스-로직-적용)
+    - [스트리밍 액션](#스트리밍-액션)
 
 ## 3.0 스파크 기능 둘러보기
 
@@ -147,3 +154,167 @@ flights
 ```
 
 <img width="650" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/82a5e431-918d-4118-9ac5-fc52ddd917e3">
+
+## 3.3 구조적 스트리밍
+
+- 스파크 2.2 버전에서 안정화(production-ready)된 스트림 처리용 고수준 API
+
+- 구조적 API로 개발된 배치 모드의 연산을 스트리밍 방식으로 실행 가능
+
+- 지연 시간 줄이고 증분 처리 가능
+
+- 배치 처리용 코드를 일부 수정해 스트리밍 처리를 수행하고 값을 빠르게 얻을 수 있다는 장점 존재
+
+- 프로토타입을 배치 잡으로 개발 후 스트리밍 잡으로 변환 가능
+
+- 모든 작업은 데이터를 증분 처리하면서 수행
+
+### 소매(retail) 데이터셋
+
+구조적 스트리밍을 얼마나 쉽게 만들 수 있는지 간단한 예제로 알아본다.  
+예제에서는 [소매(retail) 데이터셋](https://bit.ly/2PvOwCS)을 사용한다. 데이터셋에는 특정 날짜와 시간 정보가 존재한다. 예제해서는 하루치 데이터를 나타내는 by-day 디렉터리의 파일을 사용한다.
+
+소매 데이터이므로 소매점에서 생성된 데이터가 구조적 스트리밍 잡이 읽을 수 있는 저장소로 전송되고 있다고 가정한다.(여러 프로세스에서 데이터가 꾸준하게 생성되는 상황)
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/fadeb4b0-ffec-4363-9995-38fa344ecc91">
+
+$\rightarrow$ 데이터 구조
+
+### DataFrame, Schema 생성
+
+정적 데이터셋의 데이터를 분석해 DataFrame을 생성하고 정적 데이터셋의 스키마도 함께 생성한다.
+
+```scala
+val staticDataFrame = spark.read.format("csv")
+  .option("header", "true")
+  .option("inferSchema", "true")
+  . load("./data/retail-data/by-day/*.csv")
+
+staticDataFrame.createOrReplaceTempView("retail_data")
+
+val staticSchema = staticDataFrame.schema
+```
+
+<img width="700" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/3db25ff0-1f51-470b-9ffe-8d6698ec68e3">
+
+### 데이터 그룹화 및 집계
+
+시계열(time-series) 데이터를다루기 때문에 데이터를 그룹화하고 집계하는 방법을 알아볼 필요가 있다.
+
+이를 위해 특정 고객(CustomerId로 구분)이 대량으로 구매하는 영업 시간을 살펴본다. 예를 들어 총 구매비용 컬럼을 추가하고 고객이 가장 많이 소비한 날을 찾는다.
+
+윈도우 함수(window fuction)는 집계 시 시계열 컬럼을 기준으로 각 날짜에 대한 전체 데이터를 가지는 윈도우를 구성한다. 윈도우 간격을 통해 처리 요건을 명시할 수 있어 날짜와 타임스탬프 처리에 유용하다.  
+스파크는 관련 날짜의 데이터를 그룹화한다.
+
+```scala
+import org.apache.spark.sql.functions.{window, col}
+
+staticDataFrame
+  .selectExpr(
+    "CustomerId",
+    "(UnitPrice * Quantity) as total_cost",
+    "InvoiceDate")
+  .groupBy(
+    col("CustomerId"), window(col("InvoiceDate"), "1 day"))
+  .sum("total_cost")
+  .show(5)
+```
+
+<img width="350" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/e55bb2aa-2b7e-4f46-b6e5-0eadee16716b">
+
+(책의 실행 결과와 달라 확인해보니 데이터셋 안 Quantity 값이 음수인 경우도 있어 total_cost가 음수값인 로우가 존재한다.)
+
+로컬 모드로 위 코드를 실행하려면 로컬 모드에 적합한 셔플 파티션 수를 설정하는 것이 좋다.
+
+셔플 파티션 수는 셔플 이후에 생성될 파티션 수를 의미한다. 기본값은 200이나 로컬 모드에서는 많은 익스큐터가 필요하지 않아 5로 줄인다.
+
+```scala
+spark.conf.set("spark.sql.shuffle.partitions", "5")
+```
+
+### 스트리밍 코드
+
+지금까지 동작 방식을 알아보았다. 이제 스트리밍 코드를 살펴본다. 코드는 거의 바뀌지 않는다.
+
+read 메서드 대신 **readStream** 메서드를 사용하는 것이 가장 큰 차이점이다. 그리고 maxFilesPerTrigger 옵션을 추가로 지정해 한 번에 읽을 파일 수를 설정한다.
+
+```scala
+val streamingDataFrame = spark.readStream
+  .schema(staticSchema)
+  .option("maxFilesPerTrigger", 1)
+  .format("csv")
+  .option("header", "true")
+  .load("./data/retail-data/by-day/*.csv")
+```
+
+위 코드를 실행 후 DataFrame이 스트리밍 유형인지 확인할 수 있다.
+
+```scala
+streamingDataFrame.isStreaming
+```
+
+isStreaming 속성은 Dataset이 데이터를 연속적으로 전달하는 데이터 소스일 때 true를 반환한다.
+
+<img width="600" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/3eb77d0e-122a-4d67-977c-d3413d6ea0b5">
+
+### 비즈니스 로직 적용
+
+기존 DataFrame 처리와 동일한 비즈니스 로직을 적용해 총 판매 금액을 계산한다.
+
+```scala
+val purchaseByCustomerPerHour = streamingDataFrame
+  .selectExpr(
+    "CustomerId",
+    "(UnitPrice * Quantity) as total_cost",
+    "InvoiceDate")
+  .groupBy(
+    col("CustomerId"), window(col("InvoiceDate"), "1 day"))
+  .sum("total_cost")
+```
+
+이 작업 역시 지연 연산(lazy operation)이므로 데이터 플로를 실행하기 위해 스트리밍 액션을 호출해야 한다.
+
+### 스트리밍 액션
+
+스트리밍 액션은 어딘가에 데이터를 채워 넣어야 하므로 **count 메서드와 같은 일반적인 정적 액션과는 다른 특성**을 가진다.
+
+사용할 스트리밍 액션은 **트리거가 실행된 다음 데이터를 갱신하게 될 인메모리 테이블에 데이터를 저장**한다. 이번 예제의 경우 **파일마다 트리거를 실행**한다.
+
+스파크는 **이전 집계값보다 더 큰 값이 발생한 경우에만 인메모리 테이블을 갱신**하므로 **언제나 가장 큰 값**을 얻을 수 있다.
+
+```scala
+purchaseByCustomerPerHour.writeStream
+  .format("memory") // memory = 인메모리 테이블에 저장
+  .queryName("customer_purchases") // 인메모리에 저장될 테이블명
+  .outputMode("complete") // complete = 모든 카운트 수행 결과를 테이블에 저장
+  .start()
+```
+
+스트림이 시작되면 쿼리 실행 결과가 어떠한 형태로 인메모리 테이블에 기록되는지 확인할 수 있다.
+
+```scala
+spark.sql("""
+  SELECT *
+  FROM customer_purchases
+  ORDER BY `sum(total_cost)` DESC
+  """)
+  .show(5)
+```
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/dcfad25e-3a84-4694-8724-27d0616394cf">
+
+더 많은 데이터를 읽을수록 테이블 구성이 바뀐다는 것을 알 수 있다. 각 파일에 있는 데이터에 따라 결과가 변경될 수도 있고, 변경되지 않을 수도 있다.
+
+이 예제는 고객을 그룹화하기 때문에 시간이 지남에 따라 일정 기간 최고로 많이 구매한 고객의 구매 금액이 증가할 것으로 기대할 수 있다. 또한 상황에 따라 처리 결과를 콘솔에 출력할 수 있다.
+
+```scala
+purchaseByCustomerPerHour.writeStream
+  .format("console") // console = 콘솔에 결과 출력
+  .queryName("customer_purchases_2")
+  .outputMode("complete")
+  .start()
+```
+
+예제에서 사용한 두 가지 방식(메모리나 콘솔로 출력, 파일별로 트리거를 수행)을 운영 환경에서 사용하는 것은 좋지 않지만 구조적 스트리밍을 경험해보기에는 충분하다.
+
+스파크가 데이터를 처리하는 시점이 아닌 이벤트 시간에 따라 윈도우를 구성하는 방식에 주목할 필요가 있다. 이 방법을 사용하면 기존 스파크 스트리밍의 단점을 구조적 스트리밍으로 보완할 수 있다.
