@@ -7,3 +7,7 @@
 ### [Chapter 2 : 스파크 간단히 살펴보기](https://github.com/usuyn/TIL/blob/master/spark/definitive-guide/part1/chapter2.md)
 
 ### [Chapter 3 : 스파크 기능 둘러보기](https://github.com/usuyn/TIL/blob/master/spark/definitive-guide/part1/chapter3.md)
+
+## [Part 2 : 구조적 API - DataFrame, SQL, Dataset](https://github.com/usuyn/TIL/tree/master/spark/definitive-guide/part2)
+
+### [Chapter 4 : 구조적 API 개요](https://github.com/usuyn/TIL/blob/master/spark/definitive-guide/part2/chapter4.md)
