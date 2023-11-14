@@ -5,6 +5,9 @@
 - 4.2 [스키마](#42-스키마)
 - 4.3 [스파크의 구조적 데이터 타입 개요(예제)](#43-스파크의-구조적-데이터-타입-개요)
 - 4.3.1 [DataFrame과 Dataset 비교](#431-dataframe과-dataset-비교)
+- 4.3.2 [컬럼](#432-컬럼)
+- 4.3.3 [로우(예제)](#433-로우)
+- 4.3.4 [스파크 데이터 타입(예제)](#434-스파크-데이터-타입)
 
 ## 4.0 구조적 API 개요
 
@@ -128,4 +131,84 @@ df.select(df.col("number") + 10)
 
 기억해야 할 것은 **DataFrame을 사용하면 스파크의 최적화된 내부 포맷을 사용**할 수 있다는 것이다.
 
-스파크의 최적화된 내부 포맷을 사용하면 스파크가 지원하는 어떤 언어 API를 사용하더라도 동일한 효고와 효율성 얻을 수 있다.
+스파크의 최적화된 내부 포맷을 사용하면 스파크가 지원하는 어떤 언어 API를 사용하더라도 동일한 효과와 효율성 얻을 수 있다.
+
+## 4.3.2 컬럼
+
+- 정수형이나 문자열 같은 **단순 데이터 타입**
+
+- 배열이나 맵 같은 **복합 데이터 타입**
+
+- **null 값**
+
+  을 표현한다.
+
+<br/>
+
+스파크는 데이터 타입의 모든 정보를 추적하며 다양한 컬럼 변환 방법을 제공한다.  
+스파크의 컬럼은 테이블의 컬럼으로 생각할 수 있다.
+
+## 4.3.3 로우
+
+- 로우 $\rightarrow$ 데이터 레코드
+
+- DataFrame의 레코드는 Row 타입으로 구성
+
+- SQL, RDD, 데이터 소스에서 얻거나 직접 생성
+
+<br/>
+
+아래 예제는 range 메서드를 사용해 DataFrame을 생성한다.
+
+```scala
+spark.range(2).toDF().collect()
+```
+
+$\rightarrow$ 스칼라 코드
+
+```python
+spark.range(2).collect()
+```
+
+$\rightarrow$ 파이썬 코드
+
+두 코드 모두 Row 객체로 이루어진 배열을 반환한다.
+
+<img width="350" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/8c2a6cfb-931c-4c3f-bbf7-e8ed4b7ea62a">
+
+## 4.3.4 스파크 데이터 타입
+
+스파크는 여러 가지 내부 데이터 타입을 가지고 있다.  
+특정 데이터 타입의 컬럼을 초기화하고 정의하는 방법을 알아본다.
+
+스파크 데이터 타입을 스칼라에서 사용하려면 아래와 같은 코드를 사용한다.
+
+```scala
+import org.apache.spark.sql.types._
+
+val b = ByteType
+```
+
+<br/>
+
+스파크 데이터 타입을 자바에서 사용하려면 다음 패키지의 팩토리 메서드를 사용한다.
+
+```java
+import org.apache.spark.sql.types.DataTypes;
+
+ByteType x = DataTypes.ByteType;
+```
+
+<br/>
+
+스파크 데이터 타입을 파이썬에서 사용하려면 아래와 같은 코드를 사용한다.
+
+```python
+from pyspark.sql.types import *
+
+b = ByteType()
+```
+
+[스파크 공식 문서(언어별 데이터 타입 매핑)](https://spark.apache.org/docs/3.0.0-preview/sql-ref-datatypes.html)에서 다양한 프로그래밍 언어의 데이터 타입이 스파크의 어떤 데이터 타입과 매핑되는지 확인할 수 있다.
+
+고정형 DataFrame을 그대로 사용하는 경우는 거의 없으며, 대부분 DataFrame의 처리와 변환을 수행한다. 따라서 구조적 API의 실행 과정을 알아야 한다.
