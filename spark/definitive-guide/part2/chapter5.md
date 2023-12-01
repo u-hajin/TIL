@@ -9,6 +9,7 @@
   - [표현식으로 컬럼 표현(예제)](#표현식으로-컬럼-표현)
   - [DataFrame 컬럼에 접근하기(예제)](#dataframe-컬럼에-접근하기)
 - 5.3 [레코드와 로우](#53-레코드와-로우)
+- 5.3.1 [로우 생성하기](#531-로우-생성하기)
 
 <br/>
 
@@ -234,3 +235,47 @@ DataFrame의 first 메서드로 로우를 확인할 수 있다.
 ```scala
 df.first()
 ```
+
+<br/>
+
+## 5.3.1 로우 생성하기
+
+- 각 컬럼에 해당하는 값을 통해 Row 객체를 직접 생성
+
+- Row 객체는 스키마 정보를 가지고 있지 않고, DataFrame만 유일하게 스키마를 갖는다.
+
+  $\rightarrow$ Row 객체 직접 생성을 위해 DataFrame의 스키마와 같은 순서로 값을 명시
+
+```scala
+import org.apache.spark.sql.Row
+
+val myRow = Row("Hello", null, 1, false)
+```
+
+<br/>
+
+- 로우의 데이터 접근 시 원하는 위치를 지정
+
+- 스칼라, 자바 $\rightarrow$ 헬퍼 메서드 사용하거나 명시적으로 데이터 타입 지정
+
+- 파이썬, R $\rightarrow$ 올바른 데이터 타입으로 자동 변환
+
+```scala
+// 스칼라 코드
+
+myRow(0) // Any 타입
+myRow(0).asInstanceOf[String] // String 타입
+myRow(0).getString(0) // String 타입
+myRow.getInt(2) // Int 타입
+```
+
+```python
+# 파이썬 코드
+
+myRow[0]
+myRow[2]
+```
+
+<br/>
+
+Dataset API를 사용하면 자바 가상 머신(Java Virtual Machine, JVM) 객체를 가진 데이터셋을 얻을 수 있다.
