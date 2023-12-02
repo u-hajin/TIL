@@ -9,7 +9,9 @@
   - [표현식으로 컬럼 표현(예제)](#표현식으로-컬럼-표현)
   - [DataFrame 컬럼에 접근하기(예제)](#dataframe-컬럼에-접근하기)
 - 5.3 [레코드와 로우](#53-레코드와-로우)
-- 5.3.1 [로우 생성하기](#531-로우-생성하기)
+- 5.3.1 [로우 생성하기(예제)](#531-로우-생성하기)
+- 5.4 [DataFrame의 트랜스포메이션](#54-dataframe의-트랜스포메이션)
+- 5.4.1 [DataFrame 생성하기](#541-dataframe-생성하기)
 
 <br/>
 
@@ -279,3 +281,88 @@ myRow[2]
 <br/>
 
 Dataset API를 사용하면 자바 가상 머신(Java Virtual Machine, JVM) 객체를 가진 데이터셋을 얻을 수 있다.
+
+<br/>
+
+## 5.4 DataFrame의 트랜스포메이션
+
+DataFrame을 다루는 방법은 아래 그림에 표현한 것처럼 몇 가지 주요 작업으로 나눌 수 있다.
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/04d50688-5b76-48b6-b2c5-95e9e1feba8b">
+
+<br/>
+
+- 로우나 컬럼 추가
+
+- 로우나 컬럼 제거
+
+- 로우를 컬럼으로 변환하거나, 컬럼을 로우로 변환
+
+- 컬럼값을 기준으로 로우 순서 변경
+
+이 모든 유형의 작업은 트랜스포메이션으로 변환할 수 있다.  
+가장 일반적인 트랜스포메이션은 모든 로우의 특정 컬럼값을 변경하고 그 결과를 반환하는 것이다.
+
+<br/>
+
+## 5.4.1 DataFrame 생성하기
+
+원시 데이터 소스에서 DataFrame을 생성할 수 있다.  
+생성한 DataFrame은 후반부에서 SQL 쿼리를 실행하고 SQL의 기본 트랜스포메이션을 확인하기 위해 임시 뷰로 등록한다.
+
+```scala
+// 원시 데이터 소스에서 DataFrame 생성
+
+val df = spark.read.format("json")
+  .load("./data/flight-data/json/2015-summary.json")
+
+df.createOrReplaceTempView("dfTable")
+```
+
+<br/>
+
+Row 객체를 가진 Seq 타입을 직접 변환해 DataFrame을 생성할 수 있다.
+
+```scala
+// Row 객체 가진 Seq 타입 변환해 DataFrame 생성
+
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.{StructField, StructType, StringType, LongType}
+
+val myManualSchema = new StructType(Array(
+  new StructField("some", StringType, true),
+  new StructField("col", StringType, true),
+  new StructField("names", LongType, false)))
+
+val myRows = Seq(Row("Hello", null, 1L))
+val myRDD = spark.sparkContext.parallelize(myRows)
+val myDf = spark.createDataFrame(myRDD, myManualSchema)
+
+myDf.show()
+
+
+// Seq 데이터 타입에 toDF 함수 활용
+
+val myDF = Seq(("Hello", 2, 1L)).toDF("col1", "col2", "col3")
+```
+
+<img width="700" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/9bd452e3-e947-41f9-9c9b-84f55a1b1152">
+
+<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/c147ff59-6d05-4377-8016-217014457ab7">
+
+<br/>
+
+> NOTE\_ 스칼라 버전의 스파크 콘솔을 사용하는 경우 Seq 데이터 타입에 toDF 함수를 활용할 수 있어 스파크의 implicits가 주는 장점을 얻을 수 있다. 하지만 implicits는 null 타입과 잘 맞지 않아 실제 운영 환경에서 사용하는 것은 권장하지 않는다.  
+> implicits : 기본 스칼라 객체를 DataFrame으로 변환하는데 사용
+
+<br/>
+
+DataFrame을 만드는 방법을 알아보았다. 이제 아래와 같이 가장 유용하게 사용할 수 있는 메서드를 알아본다.
+
+- **컬럼이나 표현식을 사용**하는 **select** 메서드
+
+- **문자열 표현식을 사용**하는 **selectExpr** 메서드
+
+- 메서드로 사용할 수 없는 **org.apache.spark.sql.functions 패키지**에 포함된 다양한 함수
+
+이 세 가지 유형의 메서드로 DataFrame을 다룰 때 필요한 **대부분의 트랜스포메이션 작업을 해결**할 수 있다.
