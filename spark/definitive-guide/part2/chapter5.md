@@ -12,6 +12,7 @@
 - 5.3.1 [로우 생성하기(예제)](#531-로우-생성하기)
 - 5.4 [DataFrame의 트랜스포메이션](#54-dataframe의-트랜스포메이션)
 - 5.4.1 [DataFrame 생성하기](#541-dataframe-생성하기)
+- 5.4.2 [select와 selectExpr](#542-select와-selectexpr)
 
 <br/>
 
@@ -346,9 +347,9 @@ myDf.show()
 val myDF = Seq(("Hello", 2, 1L)).toDF("col1", "col2", "col3")
 ```
 
-<img width="700" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/9bd452e3-e947-41f9-9c9b-84f55a1b1152">
+<img width="700" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/9bd452e3-e947-41f9-9c9b-84f55a1b1152">
 
-<img width="500" alt="image" src="https://github.com/usuyn/TIL/assets/68963707/c147ff59-6d05-4377-8016-217014457ab7">
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/c147ff59-6d05-4377-8016-217014457ab7">
 
 <br/>
 
@@ -366,3 +367,139 @@ DataFrame을 만드는 방법을 알아보았다. 이제 아래와 같이 가장
 - 메서드로 사용할 수 없는 **org.apache.spark.sql.functions 패키지**에 포함된 다양한 함수
 
 이 세 가지 유형의 메서드로 DataFrame을 다룰 때 필요한 **대부분의 트랜스포메이션 작업을 해결**할 수 있다.
+
+<br/>
+
+## 5.4.2 select와 selectExpr
+
+select와 selectExpr 메서드를 사용하면 데이터 테이블에 SQL을 실행하는 것처럼 DataFrame에서도 SQL을 사용할 수 있다.
+
+다시 말해, **DataFrame의 컬럼을 다룰 때 SQL을 사용**할 수 있다.  
+DataFrame을 사용한 몇 가지 예제를 살펴보면서 컬럼을 다루는 여러 가지 방법을 알아본다.
+
+### 문자열 컬럼명을 인수로 받는 select
+
+```scala
+df.select("DEST_COUNTRY_NAME").show(2)
+
+// SQL
+SELECT DEST_COUNTRY_NAME
+FROM dfTable
+LIMIT 2;
+```
+
+<img width="250" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/1087c7ad-d49d-4ce2-982b-f2d482823fcb">
+
+### 여러 컬럼을 선택
+
+```scala
+df.select("DEST_COUNTRY_NAME", "ORIGIN_COUNTRY_NAME").show(2)
+
+// SQL
+SELECT DEST_COUNTRY_NAME, ORIGIN_COUNTRY_NAME
+FROM dfTable
+LIMIT 2
+```
+
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/889670f0-83a9-41b4-8b6b-98ed6b1bede7">
+
+### [다양한 컬럼 참조 방법](#52-컬럼과-표현식) 함께 사용
+
+```scala
+import org.apache.spark.sql.functions.{expr, col, column}
+
+df.select(
+    df.col("DEST_COUNTRY_NAME"),
+    col("DEST_COUNTRY_NAME"),
+    column("DEST_COUNTRY_NAME"),
+    'DEST_COUNTRY_NAME,
+    $"DEST_COUNTRY_NAME",
+    expr("DEST_COUNTRY_NAME"))
+  .show(2)
+```
+
+<img width="600" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/86eeffae-17db-4a53-b154-4d8ff1623738">
+
+<br/>
+
+Column 객체와 문자열을 함께 섞어 쓰는 것은 컴파일러 오류를 발생시키므로 유의해야 한다.
+
+```scala
+df.select(
+  col("DEST_COUNTRY_NAME"),
+  "DEST_COUNTRY_NAME"
+)
+```
+
+### expr 함수
+
+expr 함수는 가장 유연한 참조 방법이다. expr 함수는 단순 컬럼 참조나 문자열을 이용해 컬럼을 참조할 수 있다.
+
+설명을 위해 AS 키워드로 컬럼명을 변경한 다음 alias 메서드로 원래 컬럼명으로 되돌린다.
+
+```scala
+df.select(expr("DEST_COUNTRY_NAME AS destination")).show(2)
+
+// SQL
+SELECT DEST_COUNTRY_NAME as destination
+FROM dfTable
+LIMIT 2
+```
+
+위 코드는 컬럼명을 'destination'으로 변경한다. 표현식의 결과를 다른 표현식으로 다시 처리할 수 있다.
+
+<br/>
+
+```scala
+df.select(expr("DEST_COUNTRY_NAME as destination")
+  .alias("DEST_COUNTRY_NAME"))
+  .show(2)
+```
+
+위 코드는 변경한 컬럼명을 원래 이름으로 되돌려 놓는다.
+
+### selectExpr
+
+select 메서드에 expr 함수를 사용하는 패턴을 자주 사용한다. 스파크는 이런 작업을 간단하고 효율적으로 할 수 있는 selectExpr 메서드를 제공한다.
+
+```scala
+df.selectExpr("DEST_COUNTRY_NAME as newColumnName", "DEST_COUNTRY_NAME").show(2)
+```
+
+<img width="550" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/d1fa4dc2-cf04-4148-8e15-72007e78daf5">
+
+<br/>
+
+selectExpr 메서드는 새로운 DataFrame을 생성하는 복잡한 표현식을 간단하게 만드는 도구이다.  
+사실 모든 유효한 비집계형(non-aggregating) SQL 구문을 지정할 수 있다. 단, 컬럼을 식별할 수 있어야 한다.
+
+다음 코드는 DataFrame에 출발지와 도착지가 같은지 나타내는 새로운 withinCountry 컬럼을 추가하는 예제이다.
+
+```scala
+df.selectExpr(
+    "*",  // 모든 원본 컬럼 포함
+    "(DEST_COUNTRY_NAME = ORIGIN_COUNTRY_NAME) as withinCountry")
+  .show(2)
+
+// SQL
+SELECT *, (DEST_COUNTRY_NAME = ORIGIN_COUNTRY_NAME) as withinCountry
+FROM dfTable
+LIMIT 2
+```
+
+<img width="400" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/f2f15d8b-cf21-40d3-ae48-87e1c9fb822b">
+
+<br/>
+
+select 표현식에는 DataFrame의 컬럼에 대한 집계 함수를 지정할 수 있다.
+
+```scala
+df.selectExpr("avg(count)", "count(distinct(DEST_COUNTRY_NAME))").show(2)
+
+// SQL
+SELECT avg(count), count(distinct(DEST_COUNTRY_NAME))
+FROM dfTable
+LIMIT 2
+```
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/ebb03868-baae-4af2-9b6e-3cc4e732e337">
