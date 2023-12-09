@@ -13,6 +13,7 @@
 - 5.4 [DataFrame의 트랜스포메이션](#54-dataframe의-트랜스포메이션)
 - 5.4.1 [DataFrame 생성하기](#541-dataframe-생성하기)
 - 5.4.2 [select와 selectExpr](#542-select와-selectexpr)
+- 5.4.3 [스파크 데이터 타입으로 변환하기(예제)](#543-스파크-데이터-타입으로-변환하기)
 
 <br/>
 
@@ -503,3 +504,30 @@ LIMIT 2
 ```
 
 <img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/ebb03868-baae-4af2-9b6e-3cc4e732e337">
+
+<br/>
+
+## 5.4.3 스파크 데이터 타입으로 변환하기
+
+떄로는 새로운 컬럼이 아닌 명시적인 값을 스파크에 전달해야 한다. 명시적인 값은 상숫값일 수 있고, 추후 비교에 사용할 무언가가 될 수도 있다. 이때 **리터럴**(**literal**)을 사용한다.
+
+리터럴은 **프로그래밍 언어의 리터럴값을 스파크가 이해할 수 있는 값으로 변환**한다. 리터럴은 **표현식**이며 이전 예제와 같은 방식으로 사용한다.
+
+```scala
+import org.apache.spark.sql.functions.lit
+
+df.select(expr("*"), lit(1).as("One")).show(2)
+
+// SQL
+SELECT *, 1 as One
+FROM dfTable
+LIMIT 2
+```
+
+SQL에서 리터럴은 상숫값을 의미한다.
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/475500f7-44af-4b5b-901b-b35c76c19d6e">
+
+<br/>
+
+어떤 상수나 프로그래밍으로 생성된 변숫값이 **특정 컬럼의 값보다 큰지 확인할 때 리터럴을 사용**한다.
