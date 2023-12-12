@@ -14,6 +14,7 @@
 - 5.4.1 [DataFrame 생성하기](#541-dataframe-생성하기)
 - 5.4.2 [select와 selectExpr](#542-select와-selectexpr)
 - 5.4.3 [스파크 데이터 타입으로 변환하기(예제)](#543-스파크-데이터-타입으로-변환하기)
+- 5.4.4 [컬럼 추가하기(예제)](#544-컬럼-추가하기)
 
 <br/>
 
@@ -531,3 +532,80 @@ SQL에서 리터럴은 상숫값을 의미한다.
 <br/>
 
 어떤 상수나 프로그래밍으로 생성된 변숫값이 **특정 컬럼의 값보다 큰지 확인할 때 리터럴을 사용**한다.
+
+<br/>
+
+## 5.4.4 컬럼 추가하기
+
+DataFrame에 신규 컬럼을 추가하는 공식적인 방법은 DataFrame의 withColumn 메서드를 사용하는 것이다.
+
+숫자 1을 값으로 가지는 컬럼을 추가하는 예제이다.
+
+```scala
+df.withColumn("numberOne", lit(1)).show(2)
+
+// SQL
+SELECT *, 1 as numberOne
+FROM dfTable
+LIMIT 2
+```
+
+<img width="300" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/27327f24-54fe-4c2c-878d-16dfe22345ca">
+
+<br/>
+
+출발지와 도착지가 같은지 여부를 불리언 타입으로 표현하는 예제이다.
+
+```scala
+df.withColumn("withinCountry", expr("ORIGIN_COUNTRY_NAME == DEST_COUNTRY_NAME"))
+  .show(2)
+```
+
+<img width="350" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/991cd850-104f-423e-b6df-77e2f589b098">
+
+<br/>
+
+withColumn 메서드는 컬럼명, 값을 생성할 표현식 두 개의 인수를 사용한다.
+
+또한 withColumn 메세드로 컬럼명을 변경할 수도 있다.
+
+```scala
+df.withColumn("Destination", expr("DEST_COUNTRY_NAME")).columns
+```
+
+<img width="500" height="auto" src="https://github.com/usuyn/TIL/assets/68963707/bdf7d4ce-02b3-4607-a8ee-8121b9a420bb">
+
+<br/>
+
+위 예제에서 withColumn 메서드의 첫 번째 인수로 새로운 컬럼명을 나타내는 문자열을 지정했기 때문에 이스케이프 문자가 필요 없다.
+
+다음 예제에서는 표현식으로 컬럼을 참조하므로 백틱(`) 문자를 사용한다.
+
+```scala
+dfWithLongColName.selectExpr(
+  "`This Long Column-Name`",
+  "`This Long Column-Name` as `new col`")
+  .show(2)
+
+dfWithLongColName.createOrReplaceTempView("dfTableLong")
+
+// SQL
+SELECT `This Long Column-Name`, `This Long Column-Name` as `new col`
+FROME dfTableLong
+LIMIT 2
+```
+
+표현식 대신 문자열을 사용해 명시적으로 컬럼을 참조하면 리터럴로 해석되기 때문에 예약 문자가 포함된 컬럼을 참조할 수 있다.  
+예약 문자나 키워드를 사용하는 표현식에만 이스케이프 처리가 필요하다.
+
+아래 두 코드는 모두 같은 DataFrame을 만든다.
+
+```scala
+// 스칼라 코드
+dfWithLongColName.select(col("This Long Column-Name")).columns
+```
+
+```python
+# 파이썬 코드
+dfWithLongColName.select(expr("`This Long Column-Name`")).columns
+```
